@@ -14,8 +14,8 @@ class MockPaymentProvider implements PaymentProviderInterface
         // Simulate processing time
         usleep(100000); // 0.1 seconds
 
-        // Simulate 90% success rate for demo
-        $success = rand(1, 100) <= 90;
+        // In testing environment, always succeed; otherwise simulate 90% success rate for demo
+        $success = app()->environment('testing') ? true : (rand(1, 100) <= 90);
         
         $transactionId = 'MOCK_' . Str::upper(Str::random(12));
         
@@ -76,7 +76,7 @@ class MockPaymentProvider implements PaymentProviderInterface
     {
         // Basic validation for mock provider
         return isset($paymentData['payment_method']) 
-            && in_array($paymentData['payment_method'], ['credit_card', 'debit_card', 'paypal', 'bank_transfer']);
+            && in_array($paymentData['payment_method'], ['credit_card', 'debit_card', 'paypal', 'bank_transfer', 'mock']);
     }
 
     public function handleWebhook(array $webhookData): ?PaymentResult

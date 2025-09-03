@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\PaymentTransaction;
+use App\Services\DonationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -131,38 +132,19 @@ class DonationController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-
-            // Create donation record
-            $donation = Donation::create([
-                'amount' => $request->amount,
+            // Use DonationService to create donation and process payment
+            $donationService = app(DonationService::class);
+            
+            $donationData = [
                 'campaign_id' => $request->campaign_id,
-                'user_id' => $request->user()->id,
+                'amount' => $request->amount,
                 'payment_method' => $request->payment_method,
-                'transaction_id' => 'TXN_' . Str::upper(Str::random(10)),
-                'status' => 'pending',
                 'anonymous' => $request->get('anonymous', false),
                 'message' => $request->message,
-            ]);
-
-            // Create payment transaction record
-            $paymentTransaction = PaymentTransaction::create([
-                'donation_id' => $donation->id,
                 'provider' => 'mock', // For now, using mock provider
-                'external_transaction_id' => 'EXT_' . Str::upper(Str::random(12)),
-                'amount' => $request->amount,
-                'currency' => 'USD',
-                'status' => 'pending',
-                'response_data' => [
-                    'payment_method' => $request->payment_method,
-                    'timestamp' => now()->toISOString(),
-                ],
-            ]);
+            ];
 
-            // For demo purposes, automatically approve the payment
-            $this->processPayment($donation, $paymentTransaction);
-
-            DB::commit();
+            $donation = $donationService->createDonation($donationData, $request->user());
 
             // Log the donation
             AuditLog::createLog(
@@ -263,48 +245,5 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Process payment (mock implementation).
-     */
-    private function processPayment(Donation $donation, PaymentTransaction $transaction)
-    {
-        // Mock payment processing - in real implementation, this would call actual payment providers
-        
-        // Simulate payment success (90% success rate for demo, 100% in testing)
-        $success = app()->environment('testing') ? true : rand(1, 10) <= 9;
 
-        if ($success) {
-            // Update donation status
-            $donation->update(['status' => 'completed']);
-            
-            // Update payment transaction
-            $transaction->update([
-                'status' => 'completed',
-                'response_data' => array_merge($transaction->response_data ?? [], [
-                    'processed_at' => now()->toISOString(),
-                    'confirmation_code' => 'CONF_' . Str::upper(Str::random(8)),
-                ]),
-            ]);
-
-            // Update campaign current amount
-            /** @var \App\Models\Campaign $campaign */
-            $campaign = $donation->campaign;
-            $campaign->increment('current_amount', $donation->amount);
-
-            // Check if campaign target is reached using the model attribute
-            if ($campaign->is_goal_reached) {
-                $campaign->update(['status' => 'completed']);
-            }
-        } else {
-            // Payment failed
-            $donation->update(['status' => 'failed']);
-            $transaction->update([
-                'status' => 'failed',
-                'response_data' => array_merge($transaction->response_data ?? [], [
-                    'failed_at' => now()->toISOString(),
-                    'error_message' => 'Payment processing failed',
-                ]),
-            ]);
-        }
-    }
 }

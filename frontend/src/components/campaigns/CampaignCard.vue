@@ -97,7 +97,7 @@ const authStore = useAuthStore()
 const showDonateModal = ref(false)
 
 // Handle successful donation
-const handleDonationSuccess = (donation: { amount: number }) => {
+const handleDonationSuccess = () => {
   showDonateModal.value = false
   // Emit the donate event to parent component for any additional handling
   emit('donate', props.campaign)

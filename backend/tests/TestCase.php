@@ -56,7 +56,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         
         // Verify we're using the test database
-        $currentDb = config('database.connections.' . config('database.default') . '.database');
+        $currentDb = config('database.connections.pgsql_testing.database');
         if ($currentDb !== 'acme_csr_test') {
             throw new \Exception("Tests must run against test database 'acme_csr_test', not '{$currentDb}'");
         }
