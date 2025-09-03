@@ -11,6 +11,9 @@ class AuditService
 {
     /**
      * Get audit logs with filtering options.
+     *
+     * @param array<string, mixed> $filters
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, \App\Models\AuditLog>
      */
     public function getAuditLogs(array $filters = [], int $perPage = 50): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
@@ -47,6 +50,8 @@ class AuditService
 
     /**
      * Get user activity summary.
+     *
+     * @return array<string, mixed>
      */
     public function getUserActivitySummary(User $user, ?string $startDate = null, ?string $endDate = null): array
     {
@@ -95,6 +100,8 @@ class AuditService
 
     /**
      * Get system-wide audit summary.
+     *
+     * @return array<string, mixed>
      */
     public function getSystemAuditSummary(?string $startDate = null, ?string $endDate = null): array
     {
@@ -127,6 +134,11 @@ class AuditService
 
     /**
      * Get audit logs for a specific model.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    /**
+     * @return \Illuminate\Support\Collection<int, array{id: int, action: string, user: array{id: int, name: string, email: string}|null, old_values: array<string, mixed>|null, new_values: array<string, mixed>|null, ip_address: string|null, created_at: \Illuminate\Support\Carbon}>
      */
     public function getModelAuditLogs(string $modelType, int $modelId): Collection
     {
@@ -135,7 +147,7 @@ class AuditService
             ->where('model_id', $modelId)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($log) {
+            ->map(function ($log): array {
                 return [
                     'id' => $log->id,
                     'action' => $log->action,
@@ -154,6 +166,9 @@ class AuditService
 
     /**
      * Create an audit log entry.
+     *
+     * @param array<string, mixed>|null $oldValues
+     * @param array<string, mixed>|null $newValues
      */
     public function createLog(
         ?int $userId,
@@ -191,6 +206,9 @@ class AuditService
 
     /**
      * Export audit logs.
+     *
+     * @param array<string, mixed> $filters
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
      */
     public function exportAuditLogs(array $filters = []): Collection
     {
@@ -213,9 +231,10 @@ class AuditService
             $query->where('action', $filters['action']);
         }
 
-        return $query->orderBy('created_at', 'desc')
+        /** @var \Illuminate\Support\Collection<int, array<string, mixed>> $result */
+        $result = $query->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($log) {
+            ->map(function ($log): array {
                 return [
                     'id' => $log->id,
                     'timestamp' => $log->created_at->toISOString(),
@@ -230,10 +249,14 @@ class AuditService
                     'new_values' => $log->new_values ? json_encode($log->new_values) : null,
                 ];
             });
+
+        return $result;
     }
 
     /**
      * Get action breakdown.
+     *
+     * @return array<string, int>
      */
     private function getActionBreakdown(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): array
     {
@@ -248,6 +271,8 @@ class AuditService
 
     /**
      * Get model breakdown.
+     *
+     * @return array<string, int>
      */
     private function getModelBreakdown(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): array
     {
@@ -263,6 +288,8 @@ class AuditService
 
     /**
      * Get top users by activity.
+     *
+     * @return \Illuminate\Support\Collection<int, array{user: array{id: int, name: string, email: string, department: string|null}|null, action_count: int}>
      */
     private function getTopUsers(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate, int $limit = 10): Collection
     {
@@ -274,7 +301,7 @@ class AuditService
             ->orderBy('action_count', 'desc')
             ->limit($limit)
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item): array {
                 return [
                     'user' => $item->user ? [
                         'id' => $item->user->id,
@@ -282,13 +309,15 @@ class AuditService
                         'email' => $item->user->email,
                         'department' => $item->user->department,
                     ] : null,
-                    'action_count' => $item->action_count,
+                    'action_count' => (int) $item->action_count,
                 ];
             });
     }
 
     /**
      * Get suspicious activities.
+     *
+     * @return \Illuminate\Support\Collection<string, \Illuminate\Support\Collection<int, array<string, mixed>>>
      */
     private function getSuspiciousActivities(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): Collection
     {
@@ -312,9 +341,9 @@ class AuditService
             ->having('failed_count', '>', 5)
             ->get();
 
-        /** @var array{multiple_ip_logins: \Illuminate\Support\Collection, excessive_failed_logins: \Illuminate\Support\Collection} $suspiciousActivities */
+        /** @var array{multiple_ip_logins: \Illuminate\Support\Collection<int, array{user: array{id: int, name: string, email: string}|null, unique_ip_count: int}>, excessive_failed_logins: \Illuminate\Support\Collection<int, array{ip_address: string, failed_attempts: int}>} $suspiciousActivities */
         $suspiciousActivities = [
-            'multiple_ip_logins' => $multipleIPs->map(function ($item) {
+            'multiple_ip_logins' => $multipleIPs->map(function ($item): array {
                 return [
                     'user' => $item->user ? [
                         'id' => $item->user->id,
@@ -324,7 +353,7 @@ class AuditService
                     'unique_ip_count' => $item->ip_count,
                 ];
             }),
-            'excessive_failed_logins' => $failedLogins->map(function ($item) {
+            'excessive_failed_logins' => $failedLogins->map(function ($item): array {
                 return [
                     'ip_address' => $item->ip_address,
                     'failed_attempts' => $item->failed_count,
@@ -332,6 +361,8 @@ class AuditService
             }),
         ];
 
-        return collect($suspiciousActivities);
+        /** @var \Illuminate\Support\Collection<string, \Illuminate\Support\Collection<int, array<string, mixed>>> $result */
+        $result = collect($suspiciousActivities);
+        return $result;
     }
 }

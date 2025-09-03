@@ -49,6 +49,8 @@ class PaymentTransactionFactory extends Factory
 
     /**
      * Generate response data based on provider.
+     *
+     * @return array<string, mixed>
      */
     private function generateResponseData(string $provider): array
     {

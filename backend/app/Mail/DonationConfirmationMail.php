@@ -24,8 +24,8 @@ class DonationConfirmationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Thank you for your donation to ' . $this->donation->campaign->title,
             from: config('mail.from.address'),
+            subject: 'Thank you for your donation to ' . $this->donation->campaign->title,
         );
     }
 
@@ -57,19 +57,21 @@ class DonationConfirmationMail extends Mailable
 
     /**
      * Get receipt data for the email.
+     *
+     * @return array{receipt_id: string, amount: float, currency: string, date: string, payment_method: string, transaction_id: string|null, message: string|null, anonymous: bool, tax_year: int}
      */
     private function getReceiptData(): array
     {
         return [
-            'receipt_id' => 'RCP_' . $this->donation->id . '_' . $this->donation->created_at->format('Ymd'),
+            'receipt_id' => 'RCP_' . $this->donation->id . '_' . ($this->donation->created_at?->format('Ymd') ?? 'Unknown'),
             'amount' => $this->donation->amount,
             'currency' => 'USD',
-            'date' => $this->donation->created_at->toDateString(),
+            'date' => $this->donation->created_at?->toDateString() ?? 'Unknown',
             'payment_method' => $this->donation->payment_method,
             'transaction_id' => $this->donation->transaction_id,
             'message' => $this->donation->message,
             'anonymous' => $this->donation->anonymous,
-            'tax_year' => $this->donation->created_at->year,
+            'tax_year' => $this->donation->created_at ? $this->donation->created_at->year : (int) date('Y'),
         ];
     }
 }

@@ -313,9 +313,9 @@
                     <button
                       @click="deleteCampaign(campaign)"
                       class="w-full inline-flex items-center justify-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500"
-                      :disabled="campaign.donations_count && campaign.donations_count > 0"
+                      :disabled="(campaign.donations_count ?? 0) > 0"
                       :title="
-                        campaign.donations_count && campaign.donations_count > 0
+                        (campaign.donations_count ?? 0) > 0
                           ? 'Cannot delete campaign with donations'
                           : 'Delete campaign'
                       "
@@ -445,7 +445,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useCampaignsStore } from '@/stores/campaigns'
 
 import { apiService } from '@/services/api'
-import type { Campaign, CampaignCategory } from '@/services/api'
+import type { Campaign, CampaignCategory, PaginatedResponse } from '@/services/api'
 
 const campaignsStore = useCampaignsStore()
 
@@ -555,7 +555,7 @@ async function fetchCampaigns() {
     }
 
     // Fetch campaigns with server-side pagination and filtering
-    const response = await apiService.get('/admin/campaigns', { params })
+    const response = await apiService.get<PaginatedResponse<Campaign>>('/admin/campaigns', { params })
 
     if (response.data) {
       campaigns.value = response.data
@@ -588,7 +588,14 @@ async function fetchAllCampaigns() {
 
 async function fetchCampaignStats() {
   try {
-    const response = await apiService.get('/campaigns/stats')
+    const response = await apiService.get<{
+      active: number
+      completed: number
+      cancelled: number
+      draft: number
+      total: number
+      featured: number
+    }>('/campaigns/stats')
     campaignStats.value = response
   } catch (error) {
     console.error('Failed to fetch campaign stats:', error)
@@ -759,7 +766,7 @@ function goToPage(page: number) {
 }
 
 // Debounced search
-let searchTimeout: NodeJS.Timeout
+let searchTimeout: ReturnType<typeof setTimeout>
 function debouncedSearch() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {

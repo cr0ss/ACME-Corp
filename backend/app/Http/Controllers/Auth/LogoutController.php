@@ -11,24 +11,26 @@ class LogoutController extends Controller
     /**
      * Handle employee logout request.
      */
-    public function logout(Request $request)
+    public function logout(Request $request): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
 
         // Log the logout action
-        AuditLog::createLog(
-            $user->id,
-            'user_logout',
-            null,
-            null,
-            null,
-            null,
-            $request->ip(),
-            $request->userAgent()
-        );
+        if ($user) {
+            AuditLog::createLog(
+                $user->id,
+                'user_logout',
+                null,
+                null,
+                null,
+                null,
+                $request->ip(),
+                $request->userAgent()
+            );
 
-        // Revoke the current access token
-        $request->user()->currentAccessToken()->delete();
+            // Revoke the current access token
+            $user->currentAccessToken()->delete();
+        }
 
         return response()->json([
             'message' => 'Logout successful',
@@ -38,24 +40,26 @@ class LogoutController extends Controller
     /**
      * Revoke all tokens for the user.
      */
-    public function logoutAll(Request $request)
+    public function logoutAll(Request $request): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
 
         // Log the logout all action
-        AuditLog::createLog(
-            $user->id,
-            'user_logout_all',
-            null,
-            null,
-            null,
-            null,
-            $request->ip(),
-            $request->userAgent()
-        );
+        if ($user) {
+            AuditLog::createLog(
+                $user->id,
+                'user_logout_all',
+                null,
+                null,
+                null,
+                null,
+                $request->ip(),
+                $request->userAgent()
+            );
 
-        // Revoke all tokens
-        $request->user()->tokens()->delete();
+            // Revoke all tokens
+            $user->tokens()->delete();
+        }
 
         return response()->json([
             'message' => 'All sessions terminated successfully',

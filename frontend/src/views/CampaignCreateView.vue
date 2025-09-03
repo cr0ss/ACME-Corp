@@ -222,11 +222,19 @@ const campaignsStore = useCampaignsStore()
 const authStore = useAuthStore()
 
 // Form data
-const form = ref({
+const form = ref<{
+  title: string
+  description: string
+  category_id: string
+  target_amount: number | null
+  start_date: string
+  end_date: string
+  featured: boolean
+}>({
   title: '',
   description: '',
   category_id: '',
-  target_amount: null as number | null,
+  target_amount: null,
   start_date: '',
   end_date: '',
   featured: false,
@@ -318,7 +326,11 @@ async function handleSubmit() {
     // Success - redirect to campaigns list
     router.push('/campaigns')
   } catch (error: unknown) {
-    submitError.value = error.message || 'Failed to create campaign'
+    if (error instanceof Error) {
+      submitError.value = error.message
+    } else {
+      submitError.value = 'Failed to create campaign'
+    }
   } finally {
     isSubmitting.value = false
   }

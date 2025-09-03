@@ -156,6 +156,93 @@ install: up migrate-seed ## Full installation: start services, run migrations, s
 	@echo "📱 Frontend: http://localhost:3000"
 	@echo "🔧 Backend API: http://localhost:8000"
 
+launch: ## Complete initial launch: setup, install, and start development
+	@echo "🚀 Launching ACME CSR Platform for the first time..."
+	@echo "📋 Prerequisites check..."
+	@command -v docker >/dev/null 2>&1 || { echo "❌ Docker is not installed. Please install Docker first."; exit 1; }
+	@command -v docker-compose >/dev/null 2>&1 || { echo "❌ Docker Compose is not installed. Please install Docker Compose first."; exit 1; }
+	@echo "✅ Prerequisites check passed!"
+	@echo ""
+	@echo "🔧 Setting up environment..."
+	@if [ ! -f .env ]; then \
+		if [ -f docker.env.example ]; then \
+			cp docker.env.example .env; \
+			echo "✅ Environment file created from docker.env.example"; \
+		else \
+			echo "⚠️  No .env file found and no docker.env.example available"; \
+			echo "   Please create a .env file manually"; \
+		fi; \
+	else \
+		echo "✅ Environment file already exists"; \
+	fi
+	@echo ""
+	@echo "🐳 Starting Docker services..."
+	@make up
+	@echo ""
+	@echo "⏳ Waiting for services to be ready..."
+	@sleep 15
+	@echo "🔍 Checking if PostgreSQL container is running..."
+	@docker-compose ps postgres | grep -q "Up" || { echo "❌ PostgreSQL container is not running"; echo "   Check Docker logs with: make logs"; exit 1; }
+	@echo "✅ PostgreSQL container is running"
+	@echo ""
+	@echo "🔍 Checking database connectivity..."
+	@echo "⏳ Waiting for database to be ready..."
+	@for i in 1 2 3 4 5 6; do \
+		if docker-compose exec -T backend php artisan tinker --execute="echo 'Database connection successful';" 2>/dev/null >/dev/null; then \
+			echo "✅ Database is ready!"; \
+			break; \
+		else \
+			echo "⏳ Attempt $$i/6: Database not ready yet..."; \
+			if [ $$i -eq 6 ]; then \
+				echo "❌ Database failed to become ready after 6 attempts"; \
+				echo "   Check Docker logs with: make logs"; \
+				exit 1; \
+			fi; \
+			sleep 10; \
+		fi; \
+	done
+	@echo ""
+	@echo "📦 Installing backend dependencies..."
+	@docker-compose exec -T backend composer install --no-interaction --optimize-autoloader
+	@echo ""
+	@echo "🔑 Generating application key..."
+	@docker-compose exec -T backend php artisan key:generate --force
+	@echo ""
+	@echo "🗄️ Setting up database..."
+	@echo "   Running migrations..."
+	@docker-compose exec -T backend php artisan migrate:fresh --force || { echo "❌ Migration failed"; exit 1; }
+	@echo "   Seeding database..."
+	@docker-compose exec -T backend php artisan db:seed --force || { echo "❌ Seeding failed"; exit 1; }
+	@echo "   Verifying database seeding..."
+	@docker-compose exec -T backend php artisan tinker --execute="echo 'Users created: ' . App\Models\User::count();" || { echo "❌ Database verification failed"; exit 1; }
+	@echo "✅ Database setup complete!"
+	@echo ""
+	@echo "📱 Installing frontend dependencies..."
+	@make npm-install
+	@echo ""
+	@echo "🏗️ Building frontend assets..."
+	@make npm-build
+	@echo ""
+	@echo "🎉 Launch complete! Your ACME CSR Platform is ready."
+	@echo ""
+	@echo "🌐 Access your application:"
+	@echo "   📱 Frontend: http://localhost:3000"
+	@echo "   🔧 Backend API: http://localhost:8000"
+	@echo "   📊 Database: PostgreSQL (accessible via Docker)"
+	@echo ""
+	@echo "🛠️ Useful commands:"
+	@echo "   make help          - Show all available commands"
+	@echo "   make logs          - View application logs"
+	@echo "   make test          - Run tests"
+	@echo "   make dev           - Start development mode"
+	@echo "   make down          - Stop all services"
+	@echo ""
+	@echo "🔑 Login Credentials:"
+	@echo "   - Admin: admin@acme.com / password"
+	@echo "   - Employee: john.doe@acme.com / password"
+	@echo ""
+	@echo "✨ Happy coding!"
+
 dev: ## Start development environment
 	@echo "🚀 Starting development environment..."
 	@make up
@@ -206,17 +293,16 @@ monitor: ## Show real-time service status
 # Cleanup
 # =============================================================================
 
-clean: ## Clean up Docker resources (containers, images, volumes)
+clean: ## Clean up ACME project Docker resources only
 	docker-compose down -v
-	docker system prune -f
-	docker volume prune -f
-	@echo "🧹 Cleanup complete!"
+	@echo "🧹 ACME project cleanup complete!"
 
-clean-all: ## Nuclear cleanup (WARNING: removes all Docker data)
+clean-all: ## Clean up ACME project and remove unused Docker resources
 	docker-compose down -v
-	docker system prune -af
-	docker volume prune -f
-	@echo "💥 Nuclear cleanup complete!"
+	@echo "🗑️  Removing unused Docker images and containers..."
+	docker image prune -f --filter "label=com.docker.compose.project=acme-corp"
+	docker container prune -f --filter "label=com.docker.compose.project=acme-corp"
+	@echo "💥 ACME project cleanup complete!"
 
 # =============================================================================
 # Quick Development Tasks

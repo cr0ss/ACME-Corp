@@ -410,8 +410,10 @@ async function fetchMyCampaigns() {
 
     if (response.data) {
       myCampaigns.value = response.data
-    } else {
+    } else if (Array.isArray(response)) {
       myCampaigns.value = response
+    } else {
+      myCampaigns.value = []
     }
   } catch (error) {
     console.error('Failed to fetch my campaigns:', error)
@@ -484,16 +486,20 @@ async function deleteCampaign(campaign: Campaign) {
 
 // Click outside directive (simplified)
 const vClickOutside = {
-  beforeMount(el: HTMLElement, binding: unknown) {
-    el.clickOutsideEvent = (event: Event) => {
+  beforeMount(el: HTMLElement & { clickOutsideEvent?: (event: Event) => void }, binding: { value: () => void }) {
+    const clickOutsideEvent = (event: Event) => {
       if (!(el === event.target || el.contains(event.target as Node))) {
         binding.value()
       }
     }
-    document.addEventListener('click', el.clickOutsideEvent)
+    el.clickOutsideEvent = clickOutsideEvent
+    document.addEventListener('click', clickOutsideEvent)
   },
-  unmounted(el: HTMLElement) {
-    document.removeEventListener('click', el.clickOutsideEvent)
+  unmounted(el: HTMLElement & { clickOutsideEvent?: (event: Event) => void }) {
+    const clickOutsideEvent = el.clickOutsideEvent
+    if (clickOutsideEvent) {
+      document.removeEventListener('click', clickOutsideEvent)
+    }
   },
 }
 

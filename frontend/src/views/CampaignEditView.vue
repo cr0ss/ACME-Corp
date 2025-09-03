@@ -495,7 +495,11 @@ async function handleSubmit() {
     // Success - redirect to my campaigns
     router.push('/my-campaigns')
   } catch (error: unknown) {
-    submitError.value = error.message || 'Failed to update campaign'
+    if (error instanceof Error) {
+      submitError.value = error.message
+    } else {
+      submitError.value = 'Failed to update campaign'
+    }
   } finally {
     isSubmitting.value = false
   }

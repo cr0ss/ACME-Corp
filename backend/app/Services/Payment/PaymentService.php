@@ -11,6 +11,7 @@ use InvalidArgumentException;
 
 class PaymentService
 {
+    /** @var array<string, \App\Contracts\PaymentProviderInterface> */
     private array $providers = [];
     private ?PaymentProviderInterface $currentProvider = null;
 
@@ -51,6 +52,8 @@ class PaymentService
 
     /**
      * Get available payment providers.
+     *
+     * @return array<int, string>
      */
     public function getAvailableProviders(): array
     {
@@ -59,6 +62,8 @@ class PaymentService
 
     /**
      * Process a payment for a donation.
+     *
+     * @param array<string, mixed> $paymentData
      */
     public function processPayment(Donation $donation, array $paymentData, ?string $providerName = null): PaymentResult
     {
@@ -66,7 +71,7 @@ class PaymentService
             $this->setProvider($providerName);
         }
 
-        if (!$this->currentProvider) {
+        if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
             throw new InvalidArgumentException('No payment provider set');
         }
 
@@ -79,8 +84,12 @@ class PaymentService
             );
         }
 
-        return DB::transaction(function () use ($donation, $paymentData) {
+        return DB::transaction(function () use ($donation, $paymentData): \App\Contracts\PaymentResult {
             // Process payment with the provider
+            if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
+                throw new InvalidArgumentException('No payment provider set');
+            }
+
             $result = $this->currentProvider->processPayment($donation, $paymentData);
 
             // Update or create payment transaction record
@@ -136,11 +145,15 @@ class PaymentService
             $this->setProvider($donation->paymentTransaction->provider);
         }
 
-        if (!$this->currentProvider) {
+        if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
             throw new InvalidArgumentException('No payment provider set for refund');
         }
 
-        return DB::transaction(function () use ($donation) {
+        return DB::transaction(function () use ($donation): \App\Contracts\PaymentResult {
+            if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
+                throw new InvalidArgumentException('No payment provider set for refund');
+            }
+
             $result = $this->currentProvider->refundPayment($donation);
 
             if ($result->isSuccess()) {
@@ -174,11 +187,17 @@ class PaymentService
 
     /**
      * Handle webhook from payment provider.
+     *
+     * @param array<string, mixed> $webhookData
      */
     public function handleWebhook(string $providerName, array $webhookData): ?PaymentResult
     {
         $this->setProvider($providerName);
         
+        if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
+            throw new InvalidArgumentException('No payment provider set for webhook');
+        }
+
         return $this->currentProvider->handleWebhook($webhookData);
     }
 
@@ -192,19 +211,12 @@ class PaymentService
 
         // Register Stripe if configured
         if (config('services.stripe.secret')) {
-            $this->registerProvider('stripe', new StripePaymentProvider(
-                config('services.stripe.secret'),
-                config('services.stripe.key')
-            ));
+            $this->registerProvider('stripe', new StripePaymentProvider());
         }
 
         // Register PayPal if configured
         if (config('services.paypal.client_id')) {
-            $this->registerProvider('paypal', new PayPalPaymentProvider(
-                config('services.paypal.client_id'),
-                config('services.paypal.client_secret'),
-                config('services.paypal.sandbox', true)
-            ));
+            $this->registerProvider('paypal', new PayPalPaymentProvider());
         }
 
         // Set default provider

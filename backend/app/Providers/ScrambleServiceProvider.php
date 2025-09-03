@@ -22,7 +22,7 @@ class ScrambleServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Scramble::extendOpenApi(function (OpenApi $openApi) {
+        Scramble::extendOpenApi(function (OpenApi $openApi): void {
             $openApi->secure(
                 SecurityScheme::http('bearer')
                     ->setDescription('Laravel Sanctum Bearer Token. Format: your-token-here (without "Bearer" prefix)')

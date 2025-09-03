@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Campaign;
+use App\Models\CampaignCategory;
 use App\Models\Donation;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -15,12 +16,12 @@ class AdminAnalyticsController extends Controller
     /**
      * Get dashboard overview statistics.
      */
-    public function dashboard()
+    public function dashboard(): \Illuminate\Http\JsonResponse
     {
         $stats = [
             'overview' => [
                 'total_users' => User::count(),
-                'active_users' => User::whereHas('donations', function ($query) {
+                'active_users' => User::whereHas('donations', function ($query): void {
                     $query->where('created_at', '>=', now()->subDays(30));
                 })->count(),
                 'total_campaigns' => Campaign::count(),
@@ -58,9 +59,9 @@ class AdminAnalyticsController extends Controller
     /**
      * Get detailed donation analytics.
      */
-    public function donationAnalytics(Request $request)
+    public function donationAnalytics(Request $request): \Illuminate\Http\JsonResponse
     {
-        $period = $request->get('period', '30'); // days
+        $period = (int) $request->get('period', '30'); // days
         $groupBy = $request->get('group_by', 'day'); // day, week, month
 
         $analytics = [
@@ -79,7 +80,7 @@ class AdminAnalyticsController extends Controller
                     ->distinct('user_id')
                     ->count(),
             ],
-            'trends' => $this->getDonationTrends($period, $groupBy),
+            'trends' => $this->getDonationTrends($period),
             'by_payment_method' => $this->getDonationsByPaymentMethod($period),
             'by_department' => $this->getDonationsByDepartment($period),
             'hourly_distribution' => $this->getHourlyDonationDistribution($period),
@@ -89,11 +90,11 @@ class AdminAnalyticsController extends Controller
     }
 
     /**
-     * Get campaign analytics.
+     * Get detailed campaign analytics.
      */
-    public function campaignAnalytics(Request $request)
+    public function campaignAnalytics(Request $request): \Illuminate\Http\JsonResponse
     {
-        $period = $request->get('period', '30'); // days
+        $period = (int) $request->get('period', '30'); // days
 
         $analytics = [
             'summary' => [
@@ -127,14 +128,14 @@ class AdminAnalyticsController extends Controller
     /**
      * Get user engagement analytics.
      */
-    public function userAnalytics(Request $request)
+    public function userAnalytics(Request $request): \Illuminate\Http\JsonResponse
     {
-        $period = $request->get('period', '30'); // days
+        $period = (int) $request->get('period', '30'); // days
 
         $analytics = [
             'summary' => [
                 'total_users' => User::count(),
-                'active_users' => User::whereHas('donations', function ($query) use ($period) {
+                'active_users' => User::whereHas('donations', function ($query) use ($period): void {
                     $query->where('created_at', '>=', now()->subDays($period));
                 })->count(),
                 'new_users' => User::where('created_at', '>=', now()->subDays($period))->count(),
@@ -142,16 +143,16 @@ class AdminAnalyticsController extends Controller
             ],
             'participation' => [
                 'by_department' => $this->getUserParticipationByDepartment($period),
-                'top_donors' => User::with(['donations' => function ($query) use ($period) {
+                'top_donors' => User::with(['donations' => function ($query) use ($period): void {
                     $query->where('status', 'completed')
                         ->where('created_at', '>=', now()->subDays($period));
                 }])
-                ->whereHas('donations', function ($query) use ($period) {
+                ->whereHas('donations', function ($query) use ($period): void {
                     $query->where('status', 'completed')
                         ->where('created_at', '>=', now()->subDays($period));
                 })
                 ->get()
-                ->map(function ($user) {
+                ->map(function ($user): array {
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
@@ -177,7 +178,9 @@ class AdminAnalyticsController extends Controller
     private function calculateSuccessRate(): float
     {
         $total = Donation::count();
-        if ($total === 0) return 0;
+        if ($total === 0) {
+            return 0;
+        }
         
         $completed = Donation::where('status', 'completed')->count();
         return round(($completed / $total) * 100, 2);
@@ -185,6 +188,8 @@ class AdminAnalyticsController extends Controller
 
     /**
      * Get monthly donation trends.
+     *
+     * @return array<int, array{month: string, count: int, total: float}>
      */
     private function getMonthlyDonationTrends(): array
     {
@@ -203,6 +208,8 @@ class AdminAnalyticsController extends Controller
 
     /**
      * Get top categories by donation amount.
+     *
+     * @return array<int, array{name: string, total_raised: float, donations_count: int}>
      */
     private function getTopCategories(): array
     {
@@ -224,6 +231,8 @@ class AdminAnalyticsController extends Controller
 
     /**
      * Get top donors.
+     *
+     * @return array<int, array{id: int, name: string, department: string, employee_id: string, total_donated: float, donations_count: int}>
      */
     private function getTopDonors(): array
     {
@@ -247,6 +256,8 @@ class AdminAnalyticsController extends Controller
 
     /**
      * Get campaign performance metrics.
+     *
+     * @return array<int, array{id: int, title: string, target_amount: float, current_amount: float, progress_percentage: float, status: string}>
      */
     private function getCampaignPerformance(): array
     {
@@ -266,81 +277,136 @@ class AdminAnalyticsController extends Controller
     }
 
     /**
-     * Get donation trends for specified period.
+     * Get donation trends over time.
+     *
+     * @return array<int, array{date: string, donation_count: int, total_amount: float}>
      */
-    private function getDonationTrends(int $period, string $groupBy): array
+    private function getDonationTrends(int $period): array
     {
-        $dateFormat = match($groupBy) {
-            'week' => 'IYYY-IW',
-            'month' => 'YYYY-MM',
-            default => 'YYYY-MM-DD'
-        };
+        $startDate = now()->subDays($period);
 
-        return Donation::select(
-                DB::raw("to_char(created_at, '{$dateFormat}') as period"),
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(amount) as total')
-            )
-            ->where('status', 'completed')
-            ->where('created_at', '>=', now()->subDays($period))
-            ->groupBy('period')
-            ->orderBy('period')
-            ->get()
-            ->toArray();
+        /** @var \Illuminate\Support\Collection<int, \stdClass> $dailyData */
+        $dailyData = Donation::selectRaw('
+            DATE(created_at) as date,
+            COUNT(*) as donation_count,
+            SUM(amount) as total_amount
+        ')
+        ->where('status', 'completed')
+        ->where('created_at', '>=', $startDate)
+        ->groupBy('date')
+        ->orderBy('date')
+        ->get();
+
+        return $dailyData->map(function ($item): array {
+            /** @var \stdClass $item */
+            return [
+                'date' => $item->date,
+                'donation_count' => (int) $item->donation_count,
+                'total_amount' => round((float) $item->total_amount, 2),
+            ];
+        })->toArray();
     }
 
     /**
-     * Get donations by payment method.
+     * Get donations breakdown by payment method.
+     *
+     * @return array<int, array{payment_method: string, count: int, total_amount: float}>
      */
     private function getDonationsByPaymentMethod(int $period): array
     {
-        return Donation::select(
-                'payment_method',
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(amount) as total')
-            )
-            ->where('status', 'completed')
-            ->where('created_at', '>=', now()->subDays($period))
-            ->groupBy('payment_method')
-            ->orderBy('total', 'desc')
-            ->get()
-            ->toArray();
+        $startDate = now()->subDays($period);
+
+        /** @var \Illuminate\Support\Collection<int, \stdClass> $result */
+        $result = Donation::selectRaw('
+            payment_method,
+            COUNT(*) as count,
+            SUM(amount) as total_amount
+        ')
+        ->where('status', 'completed')
+        ->where('created_at', '>=', $startDate)
+        ->groupBy('payment_method')
+        ->orderBy('total_amount', 'desc')
+        ->get();
+
+        return $result->map(function ($item): array {
+            /** @var \stdClass $item */
+            return [
+                'payment_method' => $item->payment_method,
+                'count' => (int) $item->count,
+                'total_amount' => round((float) $item->total_amount, 2),
+            ];
+        })->toArray();
     }
 
     /**
-     * Get donations by department.
+     * Get donations breakdown by department.
+     *
+     * @return array<int, array{department: string, count: int, total_amount: float}>
      */
     private function getDonationsByDepartment(int $period): array
     {
-        return User::select(
-                'users.department',
-                DB::raw('COUNT(donations.id) as count'),
-                DB::raw('SUM(donations.amount) as total')
-            )
-            ->join('donations', 'users.id', '=', 'donations.user_id')
-            ->where('donations.status', 'completed')
-            ->where('donations.created_at', '>=', now()->subDays($period))
-            ->groupBy('users.department')
-            ->orderBy('total', 'desc')
-            ->get()
-            ->toArray();
+        $startDate = now()->subDays($period);
+
+        /** @var \Illuminate\Support\Collection<int, \stdClass> $result */
+        $result = User::selectRaw('
+            department,
+            COUNT(donations.id) as donation_count,
+            SUM(donations.amount) as total_amount
+        ')
+        ->join('donations', 'users.id', '=', 'donations.user_id')
+        ->where('donations.status', 'completed')
+        ->where('donations.created_at', '>=', $startDate)
+        ->groupBy('department')
+        ->orderBy('total_amount', 'desc')
+        ->get();
+
+        return $result->map(function ($item): array {
+            /** @var \stdClass $item */
+            return [
+                'department' => $item->department ?? 'Unknown',
+                'count' => (int) $item->donation_count,
+                'total_amount' => round((float) $item->total_amount, 2),
+            ];
+        })->toArray();
     }
 
     /**
      * Get hourly donation distribution.
+     *
+     * @return array<int, array{hour: int, donation_count: int, total_amount: float}>
      */
     private function getHourlyDonationDistribution(int $period): array
     {
-        return Donation::select(
-                DB::raw('extract(hour from created_at) as hour'),
-                DB::raw('COUNT(*) as count')
-            )
-            ->where('status', 'completed')
-            ->where('created_at', '>=', now()->subDays($period))
-            ->groupBy('hour')
-            ->orderBy('hour')
-            ->get()
-            ->toArray();
+        $startDate = now()->subDays($period);
+
+        $hourlyData = Donation::selectRaw('
+            EXTRACT(HOUR FROM created_at) as hour,
+            COUNT(*) as donation_count,
+            SUM(amount) as total_amount
+        ')
+        ->where('status', 'completed')
+        ->where('created_at', '>=', $startDate)
+        ->groupBy('hour')
+        ->orderBy('hour')
+        ->get();
+
+        $distribution = array_fill(0, 24, [
+            'hour' => 0,
+            'donation_count' => 0,
+            'total_amount' => 0.0,
+        ]);
+
+        foreach ($hourlyData as $item) {
+            /** @var object{hour: string|int, donation_count: string|int, total_amount: string|float} $item */
+            $hour = (int) $item->hour;
+            $distribution[$hour] = [
+                'hour' => $hour,
+                'donation_count' => (int) $item->donation_count,
+                'total_amount' => round((float) $item->total_amount, 2),
+            ];
+        }
+
+        return array_values($distribution);
     }
 
     /**
@@ -349,7 +415,9 @@ class AdminAnalyticsController extends Controller
     private function getCampaignSuccessRate(int $period): float
     {
         $total = Campaign::where('created_at', '>=', now()->subDays($period))->count();
-        if ($total === 0) return 0;
+        if ($total === 0) {
+            return 0;
+        }
 
         $successful = Campaign::where('created_at', '>=', now()->subDays($period))
             ->whereRaw('current_amount >= target_amount')
@@ -359,46 +427,100 @@ class AdminAnalyticsController extends Controller
     }
 
     /**
-     * Get campaigns by category for period.
+     * Get campaigns breakdown by category.
+     *
+     * @return array<int, array{id: int, name: string, campaigns_count: int, total_target: float, total_raised: float, progress_percentage: float}>
      */
     private function getCampaignsByCategory(int $period): array
     {
-        return DB::table('campaign_categories')
-            ->join('campaigns', 'campaign_categories.id', '=', 'campaigns.category_id')
-            ->select(
-                'campaign_categories.name',
-                DB::raw('COUNT(campaigns.id) as count'),
-                DB::raw('AVG(campaigns.current_amount) as avg_raised'),
-                DB::raw('AVG(campaigns.target_amount) as avg_target')
-            )
-            ->where('campaigns.created_at', '>=', now()->subDays($period))
-            ->groupBy('campaign_categories.id', 'campaign_categories.name')
-            ->orderBy('count', 'desc')
-            ->get()
-            ->toArray();
+        $startDate = now()->subDays($period);
+
+        return CampaignCategory::withCount(['campaigns' => function ($query) use ($startDate): void {
+            $query->where('created_at', '>=', $startDate);
+        }])
+        ->withSum(['campaigns as total_target' => function ($query) use ($startDate): void {
+            $query->where('created_at', '>=', $startDate);
+        }], 'target_amount')
+        ->withSum(['campaigns as total_raised' => function ($query) use ($startDate): void {
+            $query->join('donations', 'campaigns.id', '=', 'donations.campaign_id')
+                ->where('donations.status', 'completed')
+                ->where('donations.created_at', '>=', $startDate);
+        }], 'donations.amount')
+        ->get()
+        ->map(function ($category): array {
+            /** @var \App\Models\CampaignCategory & object{campaigns_count: int|null, total_target: float|null, total_raised: float|null} $category */
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+                'campaigns_count' => (int) ($category->campaigns_count ?? 0),
+                'total_target' => round((float) ($category->total_target ?? 0), 2),
+                'total_raised' => round((float) ($category->total_raised ?? 0), 2),
+                'progress_percentage' => ($category->total_target ?? 0) > 0 
+                    ? round(($category->total_raised ?? 0) / ($category->total_target ?? 1) * 100, 2)
+                    : 0,
+            ];
+        })->toArray();
     }
 
     /**
      * Get campaign completion rates.
+     *
+     * @return array{completion_rates: array<string, int>, total_campaigns: int, successful_campaigns: int, overall_success_rate: float}
      */
     private function getCampaignCompletionRates(int $period): array
     {
-        return Campaign::select(
-                DB::raw('
-                    CASE 
-                        WHEN current_amount >= target_amount THEN \'Completed\'
-                        WHEN current_amount >= target_amount * 0.75 THEN \'75-100%\'
-                        WHEN current_amount >= target_amount * 0.5 THEN \'50-75%\'
-                        WHEN current_amount >= target_amount * 0.25 THEN \'25-50%\'
-                        ELSE \'0-25%\'
-                    END as completion_range
-                '),
-                DB::raw('COUNT(*) as count')
-            )
-            ->where('created_at', '>=', now()->subDays($period))
-            ->groupBy('completion_range')
-            ->get()
-            ->toArray();
+        $startDate = now()->subDays($period);
+
+        $campaigns = Campaign::where('created_at', '>=', $startDate)
+            ->withSum(['donations as total_raised' => function ($query) use ($startDate): void {
+                $query->where('status', 'completed')
+                    ->where('created_at', '>=', $startDate);
+            }], 'amount')
+            ->get();
+
+        $totalCampaigns = $campaigns->count();
+        if ($totalCampaigns === 0) {
+            return [
+                'completion_rates' => [],
+                'total_campaigns' => 0,
+                'successful_campaigns' => 0,
+                'overall_success_rate' => 0,
+            ];
+        }
+
+        $completionRanges = [
+            '0-25%' => 0,
+            '25-50%' => 0,
+            '50-75%' => 0,
+            '75-100%' => 0,
+            '100%+' => 0,
+        ];
+
+        foreach ($campaigns as $campaign) {
+            $progress = ($campaign->total_raised ?? 0) / max($campaign->target_amount, 1);
+
+            if ($progress < 0.25) {
+                $completionRanges['0-25%']++;
+            } elseif ($progress < 0.50) {
+                $completionRanges['25-50%']++;
+            } elseif ($progress < 0.75) {
+                $completionRanges['50-75%']++;
+            } elseif ($progress < 1.0) {
+                $completionRanges['75-100%']++;
+            } else {
+                $completionRanges['100%+']++;
+            }
+        }
+
+        $successfulCampaigns = $completionRanges['100%+'];
+        $overallSuccessRate = round(($successfulCampaigns / $totalCampaigns) * 100, 2);
+
+        return [
+            'completion_rates' => $completionRanges,
+            'total_campaigns' => $totalCampaigns,
+            'successful_campaigns' => $successfulCampaigns,
+            'overall_success_rate' => $overallSuccessRate,
+        ];
     }
 
     /**
@@ -407,9 +529,11 @@ class AdminAnalyticsController extends Controller
     private function getUserEngagementRate(int $period): float
     {
         $total = User::count();
-        if ($total === 0) return 0;
+        if ($total === 0) {
+            return 0;
+        }
 
-        $active = User::whereHas('donations', function ($query) use ($period) {
+        $active = User::whereHas('donations', function ($query) use ($period): void {
             $query->where('created_at', '>=', now()->subDays($period));
         })->count();
 
@@ -417,41 +541,69 @@ class AdminAnalyticsController extends Controller
     }
 
     /**
-     * Get user participation by department.
+     * Get user participation breakdown by department.
+     *
+     * @return array<int, array{department: string, total_users: int, active_users: int, participation_rate: float}>
      */
     private function getUserParticipationByDepartment(int $period): array
     {
-        return User::select(
-                'department',
-                DB::raw('COUNT(DISTINCT users.id) as total_users'),
-                DB::raw('COUNT(DISTINCT CASE WHEN donations.id IS NOT NULL THEN users.id END) as active_users'),
-                DB::raw('COUNT(donations.id) as total_donations'),
-                DB::raw('SUM(donations.amount) as total_donated')
-            )
-            ->leftJoin('donations', function ($join) use ($period) {
-                $join->on('users.id', '=', 'donations.user_id')
-                    ->where('donations.status', 'completed')
-                    ->where('donations.created_at', '>=', now()->subDays($period));
-            })
-            ->groupBy('department')
-            ->orderBy('total_donated', 'desc')
-            ->get()
-            ->toArray();
+        $startDate = now()->subDays($period);
+
+        /** @var \Illuminate\Support\Collection<int, \stdClass> $result */
+        $result = User::selectRaw('
+            department,
+            COUNT(DISTINCT users.id) as total_users,
+            COUNT(DISTINCT CASE WHEN donations.id IS NOT NULL THEN users.id END) as active_users
+        ')
+        ->leftJoin('donations', function ($join) use ($startDate): void {
+            $join->on('users.id', '=', 'donations.user_id')
+                ->where('donations.status', 'completed')
+                ->where('donations.created_at', '>=', $startDate);
+        })
+        ->groupBy('department')
+        ->orderBy('active_users', 'desc')
+        ->get();
+
+        return $result->map(function ($item): array {
+            /** @var \stdClass $item */
+            $totalUsers = (int) $item->total_users;
+            $activeUsers = (int) $item->active_users;
+            $participationRate = $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100, 2) : 0;
+
+            return [
+                'department' => $item->department ?? 'Unknown',
+                'total_users' => $totalUsers,
+                'active_users' => $activeUsers,
+                'participation_rate' => $participationRate,
+            ];
+        })->toArray();
     }
 
     /**
      * Get user growth trends.
+     *
+     * @return array<int, array{month: string, new_users: int}>
      */
     private function getUserGrowthTrends(int $period): array
     {
-        return User::select(
-                DB::raw('to_char(created_at, \'YYYY-MM-DD\') as date'),
-                DB::raw('COUNT(*) as new_users')
-            )
-            ->where('created_at', '>=', now()->subDays($period))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->toArray();
+        $startDate = now()->subDays($period);
+
+        /** @var \Illuminate\Support\Collection<int, \stdClass> $monthlyData */
+        $monthlyData = User::selectRaw('
+            DATE_TRUNC(\'month\', created_at) as month,
+            COUNT(*) as new_users
+        ')
+        ->where('created_at', '>=', $startDate)
+        ->groupBy('month')
+        ->orderBy('month')
+        ->get();
+
+        return $monthlyData->map(function ($item): array {
+            /** @var \stdClass $item */
+            return [
+                'month' => \Carbon\Carbon::parse($item->month)->format('Y-m'),
+                'new_users' => (int) $item->new_users,
+            ];
+        })->toArray();
     }
 }

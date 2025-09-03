@@ -17,6 +17,13 @@ A Laravel 12.x REST API powering the ACME Corp Corporate Social Responsibility d
 - **Receipt Generation** - Digital donation receipts
 - **Refund Support** - Configurable refund policies
 
+### Email System
+- **Donation Confirmations** - Automatic emails to donors with receipt details
+- **Campaign Owner Notifications** - Alerts when campaigns receive new donations
+- **Laravel Mailables** - Professional email templates with Blade views
+- **Development Testing** - Mailhog integration for email testing
+- **Queue Support** - Asynchronous email processing (configurable)
+
 ### Admin Features
 - **User Management** - Employee account administration
 - **Analytics Dashboard** - Campaign performance metrics
@@ -189,6 +196,12 @@ docker-compose exec backend php artisan test --testsuite=Unit
 docker-compose exec backend php artisan test --filter=test_admin_can_access_dashboard
 ```
 
+### Test Database Configuration
+The project uses PostgreSQL for both development and testing environments:
+- **Development**: `pgsql` connection to `acme_csr` database
+- **Testing**: `pgsql_testing` connection to `acme_csr_test` database
+- **PHPUnit**: Automatically configured to use test database
+
 ### Static Analysis
 ```bash
 # Using Make (recommended)
@@ -215,6 +228,8 @@ PAYMENT_DEFAULT_PROVIDER=mock
 MOCK_PAYMENT_SUCCESS_RATE=90
 ```
 
+**Note**: In testing environment, the mock provider always succeeds to ensure reliable test execution.
+
 ### Production (Stripe)
 ```env
 PAYMENT_DEFAULT_PROVIDER=stripe
@@ -229,26 +244,21 @@ PAYPAL_ENABLED=true
 PAYPAL_WEBHOOK_ID=your_webhook_id
 ```
 
-## 🐳 Docker Development
-
-Run with Docker Compose:
-```bash
-# From project root
-docker-compose up -d
-```
-
-This starts:
-- Laravel API (port 8000)
-- PostgreSQL database
-- Redis cache
-- Nginx reverse proxy
-
 ## 📧 Email Configuration
 
-### Development (Log emails)
+### Development (Mailhog)
 ```env
-MAIL_MAILER=log
+MAIL_MAILER=smtp
+MAIL_HOST=mailhog
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
 ```
+
+**Mailhog Access**:
+- **Web Interface**: http://localhost:8026
+- **SMTP Port**: 1025 (internal), 1026 (external)
 
 ### Production (SMTP)
 ```env
@@ -260,6 +270,33 @@ MAIL_PASSWORD=your-password
 MAIL_FROM_ADDRESS="noreply@acme.com"
 MAIL_FROM_NAME="ACME CSR Platform"
 ```
+
+### Email Templates
+- **Donation Confirmation**: `resources/views/emails/donations/confirmation.blade.php`
+- **Campaign Owner Notification**: `resources/views/emails/donations/new-donation.blade.php`
+- **Customizable**: All emails use Blade templates with donation data
+
+### Email Triggers
+- **Donor Confirmation**: Sent automatically when donation is completed
+- **Campaign Owner Alert**: Sent to campaign creator for each new donation
+- **Queue Support**: Emails can be queued for better performance
+
+## 🐳 Docker Development
+
+Run with Docker Compose:
+```bash
+# From project root
+docker-compose up -d
+```
+
+This starts:
+- **Laravel API** (port 8000)
+- **PostgreSQL database** (port 5432)
+- **Redis cache** (port 6379)
+- **Nginx reverse proxy** (port 80)
+- **Mailhog** (ports 1025/1026 for SMTP, 8026 for web interface)
+- **Queue worker** (background job processing)
+- **Scheduler** (cron job execution)
 
 ## 🔒 Security Features
 
@@ -276,6 +313,7 @@ MAIL_FROM_NAME="ACME CSR Platform"
 - **Eager Loading** - N+1 query prevention with relationship loading
 - **Query Optimization** - Efficient joins and pagination
 - **Caching Strategy** - Redis caching for production workloads
+- **Queue Processing** - Asynchronous email and notification processing
 
 ## 🤝 Contributing
 
@@ -286,6 +324,7 @@ MAIL_FROM_NAME="ACME CSR Platform"
 - Log all significant user actions
 - Write descriptive commit messages
 - Maintain PHPStan Level 8 compliance
+- Use PHPUnit attributes instead of doc-comments for tests
 
 ### Development Workflow
 1. Create feature branch from `main`
@@ -300,6 +339,25 @@ MAIL_FROM_NAME="ACME CSR Platform"
 - **Architecture Docs**: See `/docs` directory
 - **Database Schema**: View migrations in `/database/migrations`
 
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Emails not appearing in Mailhog:**
+1. Check `MAIL_PORT=1025` in backend environment
+2. Verify Mailhog is running on port 1025
+3. Clear config cache: `php artisan config:clear`
+
+**Test failures:**
+1. Ensure test database is properly configured
+2. Check `phpunit.xml` for correct database connection
+3. Run `php artisan migrate:fresh --env=testing`
+
+**Payment processing issues:**
+1. Verify payment provider is properly configured
+2. Check payment validation rules in provider classes
+3. Review payment service logs for errors
+
 ---
 
-**Built with Laravel 12.x • Powered by PostgreSQL • Secured with Sanctum**
+**Built with Laravel 12.x • Powered by PostgreSQL • Secured with Sanctum • Email-ready with Mailhog**

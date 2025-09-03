@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property float $amount
  * @property string $currency
  * @property string $status
- * @property array|null $request_data
- * @property array|null $response_data
+ * @property array<string, mixed>|null $request_data
+ * @property array<string, mixed>|null $response_data
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * 
@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaymentTransaction extends Model
 {
+    /** @use HasFactory<\Database\Factories\PaymentTransactionFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -46,6 +47,8 @@ class PaymentTransaction extends Model
 
     /**
      * Get the donation this transaction belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Donation, $this>
      */
     public function donation(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

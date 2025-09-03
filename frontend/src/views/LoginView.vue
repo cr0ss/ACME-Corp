@@ -143,12 +143,15 @@ async function handleSubmit() {
     router.push(redirect || '/')
   } catch (error: unknown) {
     // Handle validation errors
-    if (error.response?.status === 422) {
-      const validationErrors = error.response.data.errors
-      if (validationErrors) {
-        Object.keys(validationErrors).forEach((key) => {
-          errors.value[key] = validationErrors[key][0]
-        })
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } }).response
+      if (response?.status === 422) {
+        const validationErrors = response.data?.errors
+        if (validationErrors) {
+          Object.keys(validationErrors).forEach((key) => {
+            errors.value[key] = validationErrors[key][0]
+          })
+        }
       }
     }
   }

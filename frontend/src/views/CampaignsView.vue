@@ -401,7 +401,7 @@ function handleDonationSuccess() {
 }
 
 // Watchers - debounced for better performance
-let searchTimeout: NodeJS.Timeout
+let searchTimeout: ReturnType<typeof setTimeout>
 watch(
   () => filters.value.search,
   () => {

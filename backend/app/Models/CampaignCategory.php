@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class CampaignCategory extends Model
 {
+    /** @use HasFactory<\Database\Factories\CampaignCategoryFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -32,6 +33,8 @@ class CampaignCategory extends Model
 
     /**
      * Get campaigns in this category.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Campaign, $this>
      */
     public function campaigns(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

@@ -9,11 +9,6 @@ use Illuminate\Support\Str;
 
 class StripePaymentProvider implements PaymentProviderInterface
 {
-    public function __construct(
-        private string $secretKey,
-        private string $publishableKey
-    ) {}
-
     public function processPayment(Donation $donation, array $paymentData): PaymentResult
     {
         // TODO: Implement actual Stripe integration

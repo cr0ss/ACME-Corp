@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
 import { vi } from 'vitest'
+import type { Component } from 'vue'
 
 // Mock router for tests
 export const createMockRouter = (initialRoute = '/') => {
@@ -45,10 +46,10 @@ export const mockLocalStorage = () => {
 
 // Setup function for components that need Pinia and Router
 export const mountWithDependencies = async (
-  component: unknown,
+  component: Component,
   options: {
     route?: string
-    pinia?: unknown
+    pinia?: ReturnType<typeof createTestingPinia>
     mocks?: Record<string, unknown>
     props?: Record<string, unknown>
     stubs?: Record<string, unknown>

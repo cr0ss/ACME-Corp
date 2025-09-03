@@ -16,7 +16,7 @@ class AdminReportController extends Controller
     /**
      * Get comprehensive financial report.
      */
-    public function financialReport(Request $request)
+    public function financialReport(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'start_date' => 'required|date',
@@ -43,7 +43,7 @@ class AdminReportController extends Controller
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->distinct('user_id')
                     ->count(),
-                'campaigns_funded' => Campaign::whereHas('donations', function ($query) use ($startDate, $endDate) {
+                'campaigns_funded' => Campaign::whereHas('donations', function ($query) use ($startDate, $endDate): void {
                     $query->where('status', 'completed')
                         ->whereBetween('created_at', [$startDate, $endDate]);
                 })->count(),
@@ -57,16 +57,19 @@ class AdminReportController extends Controller
         ];
 
         // Log report generation
-        AuditLog::createLog(
-            $request->user()->id,
-            'financial_report_generated',
-            null,
-            null,
-            null,
-            ['start_date' => $startDate, 'end_date' => $endDate, 'group_by' => $groupBy],
-            $request->ip(),
-            $request->userAgent()
-        );
+        $user = $request->user();
+        if ($user) {
+            AuditLog::createLog(
+                $user->id,
+                'financial_report_generated',
+                null,
+                null,
+                null,
+                ['start_date' => $startDate, 'end_date' => $endDate, 'group_by' => $groupBy],
+                $request->ip(),
+                $request->userAgent()
+            );
+        }
 
         return response()->json($report);
     }
@@ -74,7 +77,7 @@ class AdminReportController extends Controller
     /**
      * Get campaign performance report.
      */
-    public function campaignReport(Request $request)
+    public function campaignReport(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'start_date' => 'required|date',
@@ -113,14 +116,14 @@ class AdminReportController extends Controller
                     return $campaign->target_amount;
                 })->count() / max($campaigns->count(), 1) * 100,
             ],
-            'by_status' => $campaigns->groupBy('status')->map(function ($group) {
+            'by_status' => $campaigns->groupBy('status')->map(function ($group): array {
                 return [
                     'count' => $group->count(),
                     'total_target' => $group->sum('target_amount'),
                     'total_raised' => $group->sum('current_amount'),
                 ];
             }),
-            'by_category' => $campaigns->groupBy('category.name')->map(function ($group) {
+            'by_category' => $campaigns->groupBy('category.name')->map(function ($group): array {
                 return [
                     'count' => $group->count(),
                     'total_target' => $group->sum('target_amount'),
@@ -131,26 +134,26 @@ class AdminReportController extends Controller
                 ];
             }),
             'performance_ranges' => [
-                '0-25%' => $campaigns->filter(function ($c) {
+                '0-25%' => $campaigns->filter(function ($c): bool {
                     return ($c->current_amount / max($c->target_amount, 1)) < 0.25;
                 })->count(),
-                '25-50%' => $campaigns->filter(function ($c) {
+                '25-50%' => $campaigns->filter(function ($c): bool {
                     $progress = $c->current_amount / max($c->target_amount, 1);
                     return $progress >= 0.25 && $progress < 0.50;
                 })->count(),
-                '50-75%' => $campaigns->filter(function ($c) {
+                '50-75%' => $campaigns->filter(function ($c): bool {
                     $progress = $c->current_amount / max($c->target_amount, 1);
                     return $progress >= 0.50 && $progress < 0.75;
                 })->count(),
-                '75-100%' => $campaigns->filter(function ($c) {
+                '75-100%' => $campaigns->filter(function ($c): bool {
                     $progress = $c->current_amount / max($c->target_amount, 1);
                     return $progress >= 0.75 && $progress < 1.0;
                 })->count(),
-                'Over 100%' => $campaigns->filter(function ($c) {
+                'Over 100%' => $campaigns->filter(function ($c): bool {
                     return ($c->current_amount / max($c->target_amount, 1)) >= 1.0;
                 })->count(),
             ],
-            'detailed_campaigns' => $campaigns->map(function (\App\Models\Campaign $campaign) {
+            'detailed_campaigns' => $campaigns->map(function (\App\Models\Campaign $campaign): array {
                 return [
                     'id' => $campaign->id,
                     'title' => $campaign->title,
@@ -161,8 +164,8 @@ class AdminReportController extends Controller
                     'progress_percentage' => ($campaign->current_amount / max($campaign->target_amount, 1)) * 100,
                     'status' => $campaign->status,
                     'donations_count' => $campaign->donations()->where('status', 'completed')->count(),
-                    'created_at' => $campaign->created_at->format('Y-m-d'),
-                    'days_active' => $campaign->created_at->diffInDays(min($campaign->end_date, now())),
+                    'created_at' => $campaign->created_at?->format('Y-m-d') ?? 'Unknown',
+                    'days_active' => $campaign->created_at?->diffInDays(min($campaign->end_date, now())) ?? 0,
                 ];
             }),
         ];
@@ -173,7 +176,7 @@ class AdminReportController extends Controller
     /**
      * Get user engagement report.
      */
-    public function userEngagementReport(Request $request)
+    public function userEngagementReport(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'start_date' => 'required|date',
@@ -185,7 +188,7 @@ class AdminReportController extends Controller
         $endDate = $request->end_date;
         $department = $request->get('department');
 
-        $query = User::with(['donations' => function ($q) use ($startDate, $endDate) {
+        $query = User::with(['donations' => function ($q) use ($startDate, $endDate): void {
             $q->where('status', 'completed')
               ->whereBetween('created_at', [$startDate, $endDate]);
         }]);
@@ -199,10 +202,10 @@ class AdminReportController extends Controller
         $report = [
             'summary' => [
                 'total_users' => $users->count(),
-                'active_users' => $users->filter(function ($user) {
+                'active_users' => $users->filter(function ($user): bool {
                     return $user->donations->count() > 0;
                 })->count(),
-                'engagement_rate' => ($users->filter(function ($user) {
+                'engagement_rate' => ($users->filter(function ($user): bool {
                     return $user->donations->count() > 0;
                 })->count() / max($users->count(), 1)) * 100,
                 'avg_donations_per_user' => $users->avg(function ($user) {
@@ -212,10 +215,10 @@ class AdminReportController extends Controller
                     return $user->donations->sum('amount');
                 }),
             ],
-            'by_department' => $users->groupBy('department')->map(function ($group) {
+            'by_department' => $users->groupBy('department')->map(function ($group): array {
                 return [
                     'total_users' => $group->count(),
-                    'active_users' => $group->filter(function ($user) {
+                    'active_users' => $group->filter(function ($user): bool {
                         return $user->donations->count() > 0;
                     })->count(),
                     'total_donations' => $group->sum(function ($user) {
@@ -224,28 +227,28 @@ class AdminReportController extends Controller
                     'total_amount' => $group->sum(function ($user) {
                         return $user->donations->sum('amount');
                     }),
-                    'engagement_rate' => ($group->filter(function ($user) {
+                    'engagement_rate' => ($group->filter(function ($user): bool {
                         return $user->donations->count() > 0;
                     })->count() / max($group->count(), 1)) * 100,
                 ];
             }),
             'participation_levels' => [
-                'non_participants' => $users->filter(function ($user) {
+                'non_participants' => $users->filter(function ($user): bool {
                     return $user->donations->count() === 0;
                 })->count(),
-                'light_participants' => $users->filter(function ($user) {
+                'light_participants' => $users->filter(function ($user): bool {
                     return $user->donations->count() >= 1 && $user->donations->count() <= 3;
                 })->count(),
-                'moderate_participants' => $users->filter(function ($user) {
+                'moderate_participants' => $users->filter(function ($user): bool {
                     return $user->donations->count() >= 4 && $user->donations->count() <= 10;
                 })->count(),
-                'heavy_participants' => $users->filter(function ($user) {
+                'heavy_participants' => $users->filter(function ($user): bool {
                     return $user->donations->count() > 10;
                 })->count(),
             ],
             'top_participants' => $users->sortByDesc(function ($user) {
                 return $user->donations->sum('amount');
-            })->take(20)->map(function ($user) {
+            })->take(20)->map(function ($user): array {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -264,7 +267,7 @@ class AdminReportController extends Controller
     /**
      * Get comprehensive CSR impact report.
      */
-    public function impactReport(Request $request)
+    public function impactReport(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'start_date' => 'required|date',
@@ -286,28 +289,28 @@ class AdminReportController extends Controller
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->distinct('user_id')
                     ->count(),
-                'beneficiary_categories' => CampaignCategory::whereHas('campaigns.donations', function ($query) use ($startDate, $endDate) {
+                'beneficiary_categories' => CampaignCategory::whereHas('campaigns.donations', function ($query) use ($startDate, $endDate): void {
                     $query->where('status', 'completed')
                         ->whereBetween('created_at', [$startDate, $endDate]);
                 })->count(),
             ],
-            'category_impact' => CampaignCategory::withSum(['campaigns as total_raised' => function ($query) use ($startDate, $endDate) {
+            'category_impact' => CampaignCategory::withSum(['campaigns as total_raised' => function ($query) use ($startDate, $endDate): void {
                 $query->join('donations', 'campaigns.id', '=', 'donations.campaign_id')
                     ->where('donations.status', 'completed')
                     ->whereBetween('donations.created_at', [$startDate, $endDate]);
             }], 'donations.amount')
-            ->withCount(['campaigns as campaigns_count' => function ($query) use ($startDate, $endDate) {
-                $query->whereHas('donations', function ($subQuery) use ($startDate, $endDate) {
+            ->withCount(['campaigns as campaigns_count' => function ($query) use ($startDate, $endDate): void {
+                $query->whereHas('donations', function ($subQuery) use ($startDate, $endDate): void {
                     $subQuery->where('status', 'completed')
                         ->whereBetween('created_at', [$startDate, $endDate]);
                 });
             }])
             ->get()
-            ->filter(function ($category) {
+            ->filter(function ($category): bool {
                 return ($category->total_raised ?? 0) > 0;
             })
             ->sortByDesc('total_raised')
-            ->map(function ($category) {
+            ->map(function ($category): array {
                 return [
                     'id' => $category->id,
                     'name' => $category->name,
@@ -324,7 +327,7 @@ class AdminReportController extends Controller
                 ->orderBy('current_amount', 'desc')
                 ->limit(10)
                 ->get()
-                ->map(function (\App\Models\Campaign $campaign) {
+                ->map(function (\App\Models\Campaign $campaign): array {
                     return [
                         'id' => $campaign->id,
                         'title' => $campaign->title,
@@ -345,7 +348,7 @@ class AdminReportController extends Controller
     /**
      * Export comprehensive data.
      */
-    public function exportData(Request $request)
+    public function exportData(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'type' => 'required|in:donations,campaigns,users,financial,impact',
@@ -369,22 +372,25 @@ class AdminReportController extends Controller
         };
 
         // Log the export
-        AuditLog::createLog(
-            $request->user()->id,
-            "export_{$type}_data",
-            null,
-            null,
-            null,
-            [
-                'type' => $type,
-                'format' => $format,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'records_count' => count($data)
-            ],
-            $request->ip(),
-            $request->userAgent()
-        );
+        $user = $request->user();
+        if ($user) {
+            AuditLog::createLog(
+                $user->id,
+                "export_{$type}_data",
+                null,
+                null,
+                null,
+                [
+                    'type' => $type,
+                    'format' => $format,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'records_count' => count($data)
+                ],
+                $request->ip(),
+                $request->userAgent()
+            );
+        }
 
         return response()->json([
             'data' => $data,
@@ -398,6 +404,9 @@ class AdminReportController extends Controller
 
     // Private helper methods for data processing
 
+    /**
+     * @return array<int, array{period: string, donations_count: int, total_amount: float, avg_amount: float}>
+     */
     private function getFinancialTrends(string $startDate, string $endDate, string $groupBy): array
     {
         $dateFormat = match($groupBy) {
@@ -421,6 +430,9 @@ class AdminReportController extends Controller
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{name: string, donations_count: int, total_amount: float, avg_donation: float}>
+     */
     private function getFinancialByCategory(string $startDate, string $endDate): array
     {
         return DB::table('campaign_categories')
@@ -440,6 +452,9 @@ class AdminReportController extends Controller
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{department: string, donations_count: int, total_amount: float, unique_donors: int}>
+     */
     private function getFinancialByDepartment(string $startDate, string $endDate): array
     {
         return DB::table('users')
@@ -458,6 +473,9 @@ class AdminReportController extends Controller
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{payment_method: string, donations_count: int, total_amount: float, avg_amount: float}>
+     */
     private function getFinancialByPaymentMethod(string $startDate, string $endDate): array
     {
         return Donation::select(
@@ -474,14 +492,17 @@ class AdminReportController extends Controller
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{id: int, title: string, category: string|null, user: string|null, total_raised: float}>
+     */
     private function getTopCampaignsByRaised(string $startDate, string $endDate): array
     {
         return Campaign::with(['category', 'user'])
-            ->whereHas('donations', function ($query) use ($startDate, $endDate) {
+            ->whereHas('donations', function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
                     ->whereBetween('created_at', [$startDate, $endDate]);
             })
-            ->withSum(['donations as total_raised' => function ($query) use ($startDate, $endDate) {
+            ->withSum(['donations as total_raised' => function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
                     ->whereBetween('created_at', [$startDate, $endDate]);
             }], 'amount')
@@ -491,18 +512,21 @@ class AdminReportController extends Controller
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{id: int, name: string, department: string|null, employee_id: string|null, total_donated: float, donations_count: int}>
+     */
     private function getTopDonorsInPeriod(string $startDate, string $endDate): array
     {
-        return User::with(['donations' => function ($query) use ($startDate, $endDate) {
+        return User::with(['donations' => function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
                     ->whereBetween('created_at', [$startDate, $endDate]);
             }])
-            ->whereHas('donations', function ($query) use ($startDate, $endDate) {
+            ->whereHas('donations', function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
                     ->whereBetween('created_at', [$startDate, $endDate]);
             })
             ->get()
-            ->map(function ($user) {
+            ->map(function ($user): array {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -518,6 +542,9 @@ class AdminReportController extends Controller
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{month: string, donations_count: int, total_raised: float, unique_donors: int, campaigns_supported: int}>
+     */
     private function getMonthlyImpactTrends(string $startDate, string $endDate): array
     {
         return Donation::select(
@@ -535,6 +562,9 @@ class AdminReportController extends Controller
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{department: string, total_employees: int, participants: int, total_donations: int, total_contributed: float}>
+     */
     private function getDepartmentParticipation(string $startDate, string $endDate): array
     {
         return User::select(
@@ -544,7 +574,7 @@ class AdminReportController extends Controller
                 DB::raw('COUNT(donations.id) as total_donations'),
                 DB::raw('SUM(donations.amount) as total_contributed')
             )
-            ->leftJoin('donations', function ($join) use ($startDate, $endDate) {
+            ->leftJoin('donations', function ($join) use ($startDate, $endDate): void {
                 $join->on('users.id', '=', 'donations.user_id')
                     ->where('donations.status', 'completed')
                     ->whereBetween('donations.created_at', [$startDate, $endDate]);
@@ -555,13 +585,16 @@ class AdminReportController extends Controller
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{id: int, amount: float, donor_name: string, donor_employee_id: string, donor_department: string, campaign_title: string, category: string, payment_method: string, transaction_id: string|null, anonymous: string, message: string|null, donated_at: string}>
+     */
     private function exportDonationsData(string $startDate, string $endDate): array
     {
         return Donation::with(['user', 'campaign.category'])
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get()
-            ->map(function (\App\Models\Donation $donation) {
+            ->map(function (\App\Models\Donation $donation): array {
                 return [
                     'id' => $donation->id,
                     'amount' => $donation->amount,
@@ -574,18 +607,21 @@ class AdminReportController extends Controller
                     'transaction_id' => $donation->transaction_id,
                     'anonymous' => $donation->anonymous ? 'Yes' : 'No',
                     'message' => $donation->message,
-                    'donated_at' => $donation->created_at->format('Y-m-d H:i:s'),
+                    'donated_at' => $donation->created_at?->format('Y-m-d H:i:s') ?? 'Unknown',
                 ];
             })
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{id: int, title: string, description: string, category: string, creator_name: string, creator_department: string, target_amount: float, current_amount: float, progress_percentage: float, status: string, featured: string, start_date: string|null, end_date: string|null, created_at: string, donations_count: int}>
+     */
     private function exportCampaignsData(string $startDate, string $endDate): array
     {
         return Campaign::with(['category', 'user'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get()
-            ->map(function (\App\Models\Campaign $campaign) {
+            ->map(function (\App\Models\Campaign $campaign): array {
                 return [
                     'id' => $campaign->id,
                     'title' => $campaign->title,
@@ -600,21 +636,24 @@ class AdminReportController extends Controller
                     'featured' => $campaign->featured ? 'Yes' : 'No',
                     'start_date' => $campaign->start_date ? \Carbon\Carbon::parse($campaign->start_date)->format('Y-m-d') : null,
                     'end_date' => $campaign->end_date ? \Carbon\Carbon::parse($campaign->end_date)->format('Y-m-d') : null,
-                    'created_at' => $campaign->created_at->format('Y-m-d H:i:s'),
+                    'created_at' => $campaign->created_at?->format('Y-m-d H:i:s') ?? 'Unknown',
                     'donations_count' => $campaign->donations()->where('status', 'completed')->count(),
                 ];
             })
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{id: int, name: string, email: string, employee_id: string, department: string, role: string, is_admin: string, donations_in_period: int, total_donated_in_period: float, avg_donation_in_period: float, joined_at: string}>
+     */
     private function exportUsersData(string $startDate, string $endDate): array
     {
-        return User::with(['donations' => function ($query) use ($startDate, $endDate) {
+        return User::with(['donations' => function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
                     ->whereBetween('created_at', [$startDate, $endDate]);
             }])
             ->get()
-            ->map(function ($user) {
+            ->map(function ($user): array {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -626,18 +665,24 @@ class AdminReportController extends Controller
                     'donations_in_period' => $user->donations->count(),
                     'total_donated_in_period' => $user->donations->sum('amount'),
                     'avg_donation_in_period' => $user->donations->avg('amount') ?? 0,
-                    'joined_at' => $user->created_at->format('Y-m-d H:i:s'),
+                    'joined_at' => $user->created_at?->format('Y-m-d H:i:s') ?? 'Unknown',
                 ];
             })
             ->toArray();
     }
 
+    /**
+     * @return array<int, array{period: string, donations_count: int, total_amount: float, avg_amount: float}>
+     */
     private function exportFinancialData(string $startDate, string $endDate): array
     {
         // This would return detailed financial breakdown
         return $this->getFinancialTrends($startDate, $endDate, 'month');
     }
 
+    /**
+     * @return array<int, array{month: string, donations_count: int, total_raised: float, unique_donors: int, campaigns_supported: int}>
+     */
     private function exportImpactData(string $startDate, string $endDate): array
     {
         // This would return impact metrics

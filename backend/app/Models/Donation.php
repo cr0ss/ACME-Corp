@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Donation extends Model
 {
+    /** @use HasFactory<\Database\Factories\DonationFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -49,6 +50,8 @@ class Donation extends Model
 
     /**
      * Get the user who made this donation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
      */
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -57,6 +60,8 @@ class Donation extends Model
 
     /**
      * Get the campaign this donation belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Campaign, $this>
      */
     public function campaign(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -65,6 +70,8 @@ class Donation extends Model
 
     /**
      * Get the payment transaction for this donation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne<PaymentTransaction, $this>
      */
     public function paymentTransaction(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
