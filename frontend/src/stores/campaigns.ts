@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { campaignsApi, categoriesApi, apiService, type Campaign, type CampaignCategory } from '@/services/api'
+import {
+  campaignsApi,
+  categoriesApi,
+  apiService,
+  type Campaign,
+  type CampaignCategory,
+} from '@/services/api'
 
 export const useCampaignsStore = defineStore('campaigns', () => {
   // State
@@ -24,16 +30,16 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     completed: 0,
     cancelled: 0,
     draft: 0,
-    total: 0
+    total: 0,
   })
 
   // Getters
-  const activeCampaigns = computed(() => 
-    campaigns.value.filter(campaign => campaign.status === 'active')
+  const activeCampaigns = computed(() =>
+    campaigns.value.filter((campaign) => campaign.status === 'active'),
   )
 
-  const featuredCampaigns = computed(() => 
-    campaigns.value.filter(campaign => campaign.featured && campaign.status === 'active')
+  const featuredCampaigns = computed(() =>
+    campaigns.value.filter((campaign) => campaign.featured && campaign.status === 'active'),
   )
 
   const activeCampaignsCount = computed(() => {
@@ -41,13 +47,13 @@ export const useCampaignsStore = defineStore('campaigns', () => {
   })
 
   // Actions
-  async function fetchCampaigns(params?: any) {
+  async function fetchCampaigns(params?: Record<string, unknown>) {
     isLoading.value = true
     error.value = null
 
     try {
       const response = await campaignsApi.getAll(params)
-      
+
       // All endpoints now return consistent format with data and meta
       campaigns.value = response.data
       pagination.value = {
@@ -56,8 +62,9 @@ export const useCampaignsStore = defineStore('campaigns', () => {
         per_page: response.per_page || response.data.length,
         total: response.total || response.data.length,
       }
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch campaigns'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch campaigns'
+      error.value = errorMessage
     } finally {
       isLoading.value = false
     }
@@ -71,8 +78,9 @@ export const useCampaignsStore = defineStore('campaigns', () => {
       const response = await campaignsApi.getById(id)
       currentCampaign.value = response.campaign
       return response
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch campaign'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch campaign'
+      error.value = errorMessage
       throw err
     } finally {
       isLoading.value = false
@@ -87,8 +95,9 @@ export const useCampaignsStore = defineStore('campaigns', () => {
       const response = await campaignsApi.create(data)
       campaigns.value.unshift(response.campaign)
       return response
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to create campaign'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create campaign'
+      error.value = errorMessage
       throw err
     } finally {
       isLoading.value = false
@@ -101,21 +110,22 @@ export const useCampaignsStore = defineStore('campaigns', () => {
 
     try {
       const response = await campaignsApi.update(id, data)
-      
+
       // Update in campaigns list
-      const index = campaigns.value.findIndex(c => c.id === id)
+      const index = campaigns.value.findIndex((c) => c.id === id)
       if (index !== -1) {
         campaigns.value[index] = response.campaign
       }
-      
+
       // Update current campaign if it matches
       if (currentCampaign.value?.id === id) {
         currentCampaign.value = response.campaign
       }
-      
+
       return response
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to update campaign'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update campaign'
+      error.value = errorMessage
       throw err
     } finally {
       isLoading.value = false
@@ -128,16 +138,17 @@ export const useCampaignsStore = defineStore('campaigns', () => {
 
     try {
       await campaignsApi.delete(id)
-      
+
       // Remove from campaigns list
-      campaigns.value = campaigns.value.filter(c => c.id !== id)
-      
+      campaigns.value = campaigns.value.filter((c) => c.id !== id)
+
       // Clear current campaign if it matches
       if (currentCampaign.value?.id === id) {
         currentCampaign.value = null
       }
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to delete campaign'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete campaign'
+      error.value = errorMessage
       throw err
     } finally {
       isLoading.value = false
@@ -148,7 +159,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     try {
       const response = await campaignsApi.getTrending()
       trendingCampaigns.value = response.data
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Failed to fetch trending campaigns:', err)
     }
   }
@@ -157,7 +168,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     try {
       const response = await campaignsApi.getEndingSoon()
       endingSoonCampaigns.value = response.data
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Failed to fetch ending soon campaigns:', err)
     }
   }
@@ -165,16 +176,22 @@ export const useCampaignsStore = defineStore('campaigns', () => {
   async function fetchCategories() {
     try {
       categories.value = await categoriesApi.getAll()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Failed to fetch categories:', err)
     }
   }
 
   async function fetchCampaignStats() {
     try {
-      const response = await apiService.get('/campaigns/stats')
+      const response = await apiService.get<{
+        active: number
+        completed: number
+        cancelled: number
+        draft: number
+        total: number
+      }>('/campaigns/stats')
       campaignStats.value = response
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Failed to fetch campaign stats:', err)
     }
   }
@@ -189,18 +206,19 @@ export const useCampaignsStore = defineStore('campaigns', () => {
 
   // Search and filter helpers
   function searchCampaigns(query: string) {
-    return campaigns.value.filter(campaign =>
-      campaign.title.toLowerCase().includes(query.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(query.toLowerCase())
+    return campaigns.value.filter(
+      (campaign) =>
+        campaign.title.toLowerCase().includes(query.toLowerCase()) ||
+        campaign.description.toLowerCase().includes(query.toLowerCase()),
     )
   }
 
   function filterCampaignsByCategory(categoryId: number) {
-    return campaigns.value.filter(campaign => campaign.category.id === categoryId)
+    return campaigns.value.filter((campaign) => campaign.category.id === categoryId)
   }
 
   function filterCampaignsByStatus(status: Campaign['status']) {
-    return campaigns.value.filter(campaign => campaign.status === status)
+    return campaigns.value.filter((campaign) => campaign.status === status)
   }
 
   return {
@@ -214,12 +232,12 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     error,
     pagination,
     campaignStats,
-    
+
     // Getters
     activeCampaigns,
     featuredCampaigns,
     activeCampaignsCount,
-    
+
     // Actions
     fetchCampaigns,
     fetchCampaign,

@@ -1,4 +1,4 @@
-import { mount, VueWrapper } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
 import { vi } from 'vitest'
@@ -11,14 +11,14 @@ export const createMockRouter = (initialRoute = '/') => {
       {
         path: '/',
         name: 'home',
-        component: { template: '<div>Home</div>' }
+        component: { template: '<div>Home</div>' },
       },
       {
         path: '/login',
         name: 'login',
-        component: { template: '<div>Login</div>' }
-      }
-    ]
+        component: { template: '<div>Login</div>' },
+      },
+    ],
   })
 
   router.push(initialRoute)
@@ -28,7 +28,7 @@ export const createMockRouter = (initialRoute = '/') => {
 // Mock localStorage for tests
 export const mockLocalStorage = () => {
   const storage: Record<string, string> = {}
-  
+
   return {
     getItem: vi.fn((key: string) => storage[key] || null),
     setItem: vi.fn((key: string, value: string) => {
@@ -38,33 +38,35 @@ export const mockLocalStorage = () => {
       delete storage[key]
     }),
     clear: vi.fn(() => {
-      Object.keys(storage).forEach(key => delete storage[key])
-    })
+      Object.keys(storage).forEach((key) => delete storage[key])
+    }),
   }
 }
 
 // Setup function for components that need Pinia and Router
 export const mountWithDependencies = async (
-  component: any, 
+  component: unknown,
   options: {
     route?: string
-    pinia?: any
-    mocks?: Record<string, any>
-    props?: Record<string, any>
-    stubs?: Record<string, any>
-  } = {}
+    pinia?: unknown
+    mocks?: Record<string, unknown>
+    props?: Record<string, unknown>
+    stubs?: Record<string, unknown>
+  } = {},
 ) => {
   const router = createMockRouter(options.route)
-  
-  const pinia = options.pinia || createTestingPinia({
-    createSpy: vi.fn,
-    stubActions: false,
-  })
+
+  const pinia =
+    options.pinia ||
+    createTestingPinia({
+      createSpy: vi.fn,
+      stubActions: false,
+    })
 
   // Mock global objects
   Object.defineProperty(window, 'localStorage', {
     value: mockLocalStorage(),
-    writable: true
+    writable: true,
   })
 
   // Navigate to the specified route if provided
@@ -77,13 +79,13 @@ export const mountWithDependencies = async (
     global: {
       plugins: [pinia, router],
       mocks: {
-        ...options.mocks
+        ...options.mocks,
       },
       stubs: {
         RouterView: { template: '<div class="router-view-stub">Router View</div>' },
-        ...options.stubs
-      }
+        ...options.stubs,
+      },
     },
-    props: options.props
+    props: options.props,
   })
 }

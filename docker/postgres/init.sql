@@ -1,7 +1,13 @@
 -- PostgreSQL initialization script for ACME CSR Platform
 
--- Create additional databases if needed
-CREATE DATABASE acme_csr_test OWNER acme_user;
+-- Create additional databases if needed (with error handling)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'acme_csr_test') THEN
+        CREATE DATABASE acme_csr_test OWNER acme_user;
+    END IF;
+END
+$$;
 
 -- Create extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

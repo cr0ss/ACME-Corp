@@ -1,94 +1,91 @@
 <template>
-  <div class="card hover:shadow-md transition-shadow duration-200">
-    <!-- Campaign Image/Icon -->
-    <div class="mb-4">
-      <div class="w-full h-48 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
-        <span class="text-4xl">{{ campaign.category.icon || '🎯' }}</span>
+  <div class="card hover:shadow-lg transition-shadow duration-200">
+    <!-- Campaign Image -->
+    <div class="relative">
+              <div class="w-full h-48 bg-gradient-to-br from-blue-100 to-blue-200 rounded-t-lg flex items-center justify-center">
+          <span class="text-4xl">{{ campaign.category?.icon || '🎯' }}</span>
+        </div>
+      <div class="absolute top-3 left-3">
+        <span :class="getStatusClass(campaign.status)" class="badge">
+          {{ getStatusText(campaign.status) }}
+        </span>
+      </div>
+      <div class="absolute top-3 right-3">
+        <span class="badge badge-primary">{{ campaign.category?.name || 'Uncategorized' }}</span>
       </div>
     </div>
 
-    <!-- Campaign Info -->
-    <div class="space-y-3">
-      <!-- Title and Category -->
-      <div>
-        <div class="flex items-center justify-between mb-1">
-          <span class="badge badge-primary">{{ campaign.category.name }}</span>
-          <span v-if="campaign.featured" class="badge badge-warning">Featured</span>
-        </div>
-        <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">
-          {{ campaign.title }}
-        </h3>
-      </div>
+    <!-- Campaign Content -->
+    <div class="p-4">
+      <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+        {{ campaign.title }}
+      </h3>
+      <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ campaign.description }}</p>
 
-      <!-- Description -->
-      <p class="text-sm text-gray-600 line-clamp-3">
-        {{ campaign.description }}
-      </p>
-
-      <!-- Progress -->
-      <div class="space-y-2">
-        <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Progress</span>
-          <span class="font-medium">{{ campaign.progress_percentage }}%</span>
+      <!-- Progress Bar -->
+      <div class="mb-4">
+        <div class="flex justify-between text-sm text-gray-600 mb-1">
+          <span>Progress</span>
+          <span>{{ Math.round((campaign.current_amount / campaign.target_amount) * 100) }}%</span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2">
           <div
             class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            :style="{ width: `${Math.min(campaign.progress_percentage, 100)}%` }"
+            :style="{
+              width: `${Math.min((campaign.current_amount / campaign.target_amount) * 100, 100)}%`,
+            }"
           ></div>
         </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-gray-600">
-            ${{ formatNumber(campaign.current_amount) }} raised
-          </span>
-          <span class="text-gray-600">
-            ${{ formatNumber(campaign.target_amount) }} goal
-          </span>
+        <div class="flex justify-between text-sm text-gray-600 mt-1">
+          <span>${{ formatNumber(campaign.current_amount) }}</span>
+          <span>${{ formatNumber(campaign.target_amount) }}</span>
         </div>
       </div>
 
-      <!-- Status and Timing -->
-      <div class="flex items-center justify-between text-xs text-gray-500">
-        <span class="badge" :class="getStatusClass(campaign.status)">
-          {{ getStatusText(campaign.status) }}
-        </span>
-        <span v-if="campaign.status === 'active'">
-          {{ getDaysRemaining(campaign.end_date) }}
-        </span>
+      <!-- Campaign Stats -->
+      <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+        <div class="text-center">
+          <div class="text-lg font-semibold text-blue-600">{{ campaign.donations_count || 0 }}</div>
+          <div class="text-gray-600">Donations</div>
+        </div>
+        <div class="text-center">
+          <div class="text-lg font-semibold text-green-600">
+            {{ getDaysRemaining(campaign.end_date) }}
+          </div>
+          <div class="text-gray-600">Remaining</div>
+        </div>
       </div>
 
-      <!-- Creator -->
-      <div class="flex items-center text-sm text-gray-600">
-        <span class="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs font-medium mr-2">
-          {{ campaign.user.name.charAt(0).toUpperCase() }}
-        </span>
-        <span>by {{ campaign.user.name }}</span>
+      <!-- Action Buttons -->
+      <div class="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+        <router-link :to="`/campaigns/${campaign.id}`" class="btn-primary flex-1 text-center">
+          View Details
+        </router-link>
+        <button
+          v-if="campaign.status === 'active' && authStore.isAuthenticated"
+          @click="showDonateModal = true"
+          class="btn-outline px-3"
+        >
+          Donate
+        </button>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="mt-4 pt-4 border-t border-gray-200 flex gap-2">
-      <router-link
-        :to="`/campaigns/${campaign.id}`"
-        class="btn-primary flex-1 text-center"
-      >
-        View Details
-      </router-link>
-      <button
-        v-if="campaign.status === 'active' && authStore.isAuthenticated"
-        @click="$emit('donate', campaign)"
-        class="btn-outline px-3"
-      >
-        Donate
-      </button>
-    </div>
+    <!-- Donation Modal -->
+    <DonationModal
+      v-if="showDonateModal"
+      :campaign="campaign"
+      @close="showDonateModal = false"
+      @success="handleDonationSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref } from 'vue'
 import type { Campaign } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import DonationModal from '@/components/donations/DonationModal.vue'
 
 interface Props {
   campaign: Campaign
@@ -97,9 +94,17 @@ interface Props {
 const props = defineProps<Props>()
 
 const authStore = useAuthStore()
+const showDonateModal = ref(false)
+
+// Handle successful donation
+const handleDonationSuccess = (donation: { amount: number }) => {
+  showDonateModal.value = false
+  // Emit the donate event to parent component for any additional handling
+  emit('donate', props.campaign)
+}
 
 // Emits
-defineEmits<{
+const emit = defineEmits<{
   donate: [campaign: Campaign]
 }>()
 
@@ -146,7 +151,7 @@ function getDaysRemaining(endDate: string): string {
   const now = new Date()
   const diffTime = end.getTime() - now.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
+
   if (diffDays < 0) {
     return 'Ended'
   } else if (diffDays === 0) {

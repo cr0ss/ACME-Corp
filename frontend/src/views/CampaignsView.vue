@@ -6,11 +6,7 @@
         <h1 class="text-3xl font-bold text-gray-900">Campaigns</h1>
         <p class="text-gray-600 mt-1">Browse and support meaningful causes in our community</p>
       </div>
-      <router-link
-        v-if="authStore.isAuthenticated"
-        to="/campaigns/create"
-        class="btn-primary"
-      >
+      <router-link v-if="authStore.isAuthenticated" to="/campaigns/create" class="btn-primary">
         Create Campaign
       </router-link>
     </div>
@@ -32,7 +28,11 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
           <select v-model="filters.category" class="input-field">
             <option value="">All Categories</option>
-            <option v-for="category in campaignsStore.categories" :key="category.id" :value="category.id">
+            <option
+              v-for="category in campaignsStore.categories"
+              :key="category.id"
+              :value="category.id"
+            >
               {{ category.icon }} {{ category.name }}
             </option>
           </select>
@@ -75,7 +75,12 @@
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5l7 7-7 7"
+            />
           </svg>
           Advanced Filters
         </button>
@@ -106,16 +111,8 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Campaign Period</label>
             <div class="grid grid-cols-2 gap-2">
-              <input
-                v-model="filters.startDate"
-                type="date"
-                class="input-field text-sm"
-              />
-              <input
-                v-model="filters.endDate"
-                type="date"
-                class="input-field text-sm"
-              />
+              <input v-model="filters.startDate" type="date" class="input-field text-sm" />
+              <input v-model="filters.endDate" type="date" class="input-field text-sm" />
             </div>
           </div>
 
@@ -147,12 +144,8 @@
       <!-- Filter Actions -->
       <div class="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
         <div class="flex items-center space-x-2">
-          <button @click="clearFilters" class="btn-secondary text-sm">
-            Clear All Filters
-          </button>
-          <button @click="saveFilters" class="btn-secondary text-sm">
-            Save Filters
-          </button>
+          <button @click="clearFilters" class="btn-secondary text-sm">Clear All Filters</button>
+          <button @click="saveFilters" class="btn-secondary text-sm">Save Filters</button>
           <button v-if="hasSavedFilters" @click="loadFilters" class="btn-secondary text-sm">
             Load Saved
           </button>
@@ -175,7 +168,10 @@
     </div>
 
     <!-- Campaigns Grid -->
-    <div v-else-if="campaignsStore.campaigns.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div
+      v-else-if="campaignsStore.campaigns.length > 0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
       <CampaignCard
         v-for="campaign in campaignsStore.campaigns"
         :key="campaign.id"
@@ -188,18 +184,19 @@
     <div v-else class="text-center py-12">
       <div class="text-6xl mb-4">🎯</div>
       <h3 class="text-lg font-medium text-gray-900 mb-2">No campaigns found</h3>
-      <p class="text-gray-600 mb-4">Try adjusting your filters or check back later for new campaigns.</p>
-      <router-link
-        v-if="authStore.isAuthenticated"
-        to="/campaigns/create"
-        class="btn-primary"
-      >
+      <p class="text-gray-600 mb-4">
+        Try adjusting your filters or check back later for new campaigns.
+      </p>
+      <router-link v-if="authStore.isAuthenticated" to="/campaigns/create" class="btn-primary">
         Create the First Campaign
       </router-link>
     </div>
 
     <!-- Pagination -->
-    <div v-if="campaignsStore.pagination && campaignsStore.pagination.last_page > 1" class="flex justify-center">
+    <div
+      v-if="campaignsStore.pagination && campaignsStore.pagination.last_page > 1"
+      class="flex justify-center"
+    >
       <nav class="flex items-center space-x-2">
         <!-- Previous button -->
         <button
@@ -209,20 +206,22 @@
         >
           Previous
         </button>
-        
+
         <!-- Page numbers -->
         <button
           v-for="page in visiblePages"
           :key="page"
           @click="goToPage(page)"
           class="px-3 py-2 rounded-md text-sm font-medium transition duration-200"
-          :class="page === campaignsStore.pagination.current_page
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-700 hover:bg-gray-100'"
+          :class="
+            page === campaignsStore.pagination.current_page
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          "
         >
           {{ page }}
         </button>
-        
+
         <!-- Next button -->
         <button
           v-if="campaignsStore.pagination.current_page < campaignsStore.pagination.last_page"
@@ -233,6 +232,14 @@
         </button>
       </nav>
     </div>
+
+    <!-- Donation Modal -->
+    <DonationModal
+      v-if="showDonateModal"
+      :campaign="selectedCampaign"
+      @close="showDonateModal = false"
+      @success="handleDonationSuccess"
+    />
   </div>
 </template>
 
@@ -241,6 +248,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCampaignsStore } from '@/stores/campaigns'
 import CampaignCard from '@/components/campaigns/CampaignCard.vue'
+import DonationModal from '@/components/donations/DonationModal.vue'
 import type { Campaign } from '@/services/api'
 
 const authStore = useAuthStore()
@@ -248,6 +256,8 @@ const campaignsStore = useCampaignsStore()
 
 // UI State
 const showAdvancedFilters = ref(false)
+const showDonateModal = ref(false)
+const selectedCampaign = ref<Campaign | null>(null)
 
 // Enhanced Filters
 const filters = ref({
@@ -260,7 +270,7 @@ const filters = ref({
   startDate: '',
   endDate: '',
   minProgress: null as number | null,
-  maxProgress: null as number | null
+  maxProgress: null as number | null,
 })
 
 // Saved filters in localStorage
@@ -288,20 +298,20 @@ const visiblePages = computed(() => {
 // Methods
 async function fetchCampaigns(page = 1) {
   // Server-side filters and pagination
-  const params: any = {
+  const params: Record<string, unknown> = {
     page,
-    per_page: 15
+    per_page: 15,
   }
-  
+
   // Basic filters
   if (filters.value.search) {
     params.search = filters.value.search
   }
-  
+
   if (filters.value.category) {
     params.category_id = filters.value.category
   }
-  
+
   if (filters.value.status) {
     params.status = filters.value.status
   }
@@ -339,7 +349,7 @@ function clearFilters() {
     startDate: '',
     endDate: '',
     minProgress: null,
-    maxProgress: null
+    maxProgress: null,
   }
   showAdvancedFilters.value = false
 }
@@ -362,9 +372,12 @@ function loadFilters() {
       filters.value = { ...filters.value, ...parsed }
       // Show advanced filters if any advanced filter is set
       showAdvancedFilters.value = !!(
-        parsed.minAmount || parsed.maxAmount ||
-        parsed.startDate || parsed.endDate ||
-        parsed.minProgress || parsed.maxProgress
+        parsed.minAmount ||
+        parsed.maxAmount ||
+        parsed.startDate ||
+        parsed.endDate ||
+        parsed.minProgress ||
+        parsed.maxProgress
       )
       console.log('Filters loaded successfully')
     }
@@ -378,29 +391,40 @@ function goToPage(page: number) {
 }
 
 function handleDonate(campaign: Campaign) {
-  // Implement donation modal or redirect
-  console.log('Donate to campaign:', campaign.title)
+  selectedCampaign.value = campaign
+  showDonateModal.value = true
+}
+
+function handleDonationSuccess() {
+  // Reload campaigns to reflect updated progress
+  fetchCampaigns(1)
 }
 
 // Watchers - debounced for better performance
 let searchTimeout: NodeJS.Timeout
-watch(() => filters.value.search, () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    fetchCampaigns(1) // Reset to page 1 when search changes
-  }, 300) // 300ms debounce
-})
+watch(
+  () => filters.value.search,
+  () => {
+    clearTimeout(searchTimeout)
+    searchTimeout = setTimeout(() => {
+      fetchCampaigns(1) // Reset to page 1 when search changes
+    }, 300) // 300ms debounce
+  },
+)
 
 // Watch other filters without debounce
-watch(() => [filters.value.category, filters.value.status, filters.value.sortBy], () => {
-  fetchCampaigns(1) // Reset to page 1 when filters change
-})
+watch(
+  () => [filters.value.category, filters.value.status, filters.value.sortBy],
+  () => {
+    fetchCampaigns(1) // Reset to page 1 when filters change
+  },
+)
 
 // Lifecycle
 onMounted(async () => {
   await campaignsStore.fetchCategories()
   await fetchCampaigns(1)
-  
+
   // Optionally auto-load saved filters
   // if (hasSavedFilters.value) {
   //   loadFilters()

@@ -60,20 +60,20 @@ seed: ## Seed the database
 # Testing & Quality Assurance
 # =============================================================================
 
-test: ## Run all tests
-	docker-compose exec backend php artisan test
+test: ## Run all tests (using test database)
+	docker-compose exec backend sh scripts/run-tests.sh
 
-test-unit: ## Run unit tests only
-	docker-compose exec backend php artisan test --testsuite=Unit
+test-unit: ## Run unit tests only (using test database)
+	docker-compose exec backend sh scripts/run-tests.sh --testsuite=Unit
 
-test-feature: ## Run feature tests only
-	docker-compose exec backend php artisan test --testsuite=Feature
+test-feature: ## Run feature tests only (using test database)
+	docker-compose exec backend sh scripts/run-tests.sh --testsuite=Feature
 
 test-filter: ## Run specific test (usage: make test-filter filter="AdminTest")
-	docker-compose exec backend php artisan test --filter=$(filter)
+	docker-compose exec backend sh scripts/run-tests.sh --filter=$(filter)
 
-test-coverage: ## Run tests with coverage report
-	docker-compose exec backend php artisan test --coverage
+test-coverage: ## Run tests with coverage report (using test database)
+	docker-compose exec backend sh scripts/run-tests.sh --coverage
 
 # Static Analysis
 phpstan: ## Run PHPStan static analysis

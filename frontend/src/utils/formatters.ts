@@ -8,13 +8,16 @@
  * @param options - Optional formatting options
  * @returns Formatted currency string
  */
-export function formatCurrency(value: number | string, options?: {
-  minimumFractionDigits?: number
-  maximumFractionDigits?: number
-  showCents?: boolean
-}): string {
+export function formatCurrency(
+  value: number | string,
+  options?: {
+    minimumFractionDigits?: number
+    maximumFractionDigits?: number
+    showCents?: boolean
+  },
+): string {
   const numValue = typeof value === 'string' ? parseFloat(value) : value
-  
+
   // Handle invalid numbers
   if (isNaN(numValue)) {
     return '$0'
@@ -23,13 +26,13 @@ export function formatCurrency(value: number | string, options?: {
   const defaultOptions = {
     minimumFractionDigits: options?.showCents !== false ? 2 : 0,
     maximumFractionDigits: options?.showCents !== false ? 2 : 0,
-    ...options
+    ...options,
   }
 
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    ...defaultOptions
+    ...defaultOptions,
   }).format(numValue)
 }
 
@@ -39,12 +42,15 @@ export function formatCurrency(value: number | string, options?: {
  * @param options - Optional formatting options
  * @returns Formatted number string
  */
-export function formatNumber(value: number | string, options?: {
-  minimumFractionDigits?: number
-  maximumFractionDigits?: number
-}): string {
+export function formatNumber(
+  value: number | string,
+  options?: {
+    minimumFractionDigits?: number
+    maximumFractionDigits?: number
+  },
+): string {
   const numValue = typeof value === 'string' ? parseFloat(value) : value
-  
+
   // Handle invalid numbers
   if (isNaN(numValue)) {
     return '0'
@@ -53,7 +59,7 @@ export function formatNumber(value: number | string, options?: {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-    ...options
+    ...options,
   }).format(numValue)
 }
 
@@ -63,11 +69,14 @@ export function formatNumber(value: number | string, options?: {
  * @param options - Optional formatting options
  * @returns Formatted number string with abbreviation
  */
-export function formatCompactNumber(value: number | string, options?: {
-  maximumFractionDigits?: number
-}): string {
+export function formatCompactNumber(
+  value: number | string,
+  options?: {
+    maximumFractionDigits?: number
+  },
+): string {
   const numValue = typeof value === 'string' ? parseFloat(value) : value
-  
+
   // Handle invalid numbers
   if (isNaN(numValue)) {
     return '0'
@@ -80,7 +89,7 @@ export function formatCompactNumber(value: number | string, options?: {
 
   return new Intl.NumberFormat('en-US', {
     notation: 'compact',
-    maximumFractionDigits: options?.maximumFractionDigits ?? 1
+    maximumFractionDigits: options?.maximumFractionDigits ?? 1,
   }).format(numValue)
 }
 
@@ -90,12 +99,15 @@ export function formatCompactNumber(value: number | string, options?: {
  * @param options - Optional formatting options
  * @returns Formatted percentage string
  */
-export function formatPercentage(value: number | string, options?: {
-  minimumFractionDigits?: number
-  maximumFractionDigits?: number
-}): string {
+export function formatPercentage(
+  value: number | string,
+  options?: {
+    minimumFractionDigits?: number
+    maximumFractionDigits?: number
+  },
+): string {
   const numValue = typeof value === 'string' ? parseFloat(value) : value
-  
+
   // Handle invalid numbers
   if (isNaN(numValue)) {
     return '0%'
@@ -104,7 +116,7 @@ export function formatPercentage(value: number | string, options?: {
   return new Intl.NumberFormat('en-US', {
     style: 'percent',
     minimumFractionDigits: options?.minimumFractionDigits ?? 0,
-    maximumFractionDigits: options?.maximumFractionDigits ?? 1
+    maximumFractionDigits: options?.maximumFractionDigits ?? 1,
   }).format(numValue)
 }
 
@@ -114,13 +126,16 @@ export function formatPercentage(value: number | string, options?: {
  * @param options - Optional formatting options
  * @returns Formatted currency string with abbreviation if needed
  */
-export function formatSmartCurrency(value: number | string, options?: {
-  threshold?: number
-  showCents?: boolean
-}): string {
+export function formatSmartCurrency(
+  value: number | string,
+  options?: {
+    threshold?: number
+    showCents?: boolean
+  },
+): string {
   const numValue = typeof value === 'string' ? parseFloat(value) : value
   const threshold = options?.threshold ?? 10000
-  
+
   // Handle invalid numbers
   if (isNaN(numValue)) {
     return '$0'
@@ -132,9 +147,9 @@ export function formatSmartCurrency(value: number | string, options?: {
       notation: 'compact',
       style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 1
+      maximumFractionDigits: 1,
     }).format(numValue)
-    
+
     return formatted
   }
 

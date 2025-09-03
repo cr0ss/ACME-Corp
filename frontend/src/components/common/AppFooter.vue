@@ -6,8 +6,8 @@
         <div class="col-span-1 md:col-span-2">
           <div class="text-xl font-bold text-blue-600 mb-4">ACME CSR Platform</div>
           <p class="text-gray-600 mb-4">
-            Supporting our community through corporate social responsibility initiatives.
-            Together, we make a difference.
+            Supporting our community through corporate social responsibility initiatives. Together,
+            we make a difference.
           </p>
           <p class="text-sm text-gray-500">
             © {{ currentYear }} ACME Corporation. All rights reserved.
@@ -21,9 +21,7 @@
           </h3>
           <ul class="space-y-2">
             <li>
-              <router-link to="/" class="text-gray-600 hover:text-gray-900">
-                Home
-              </router-link>
+              <router-link to="/" class="text-gray-600 hover:text-gray-900"> Home </router-link>
             </li>
             <li>
               <router-link to="/campaigns" class="text-gray-600 hover:text-gray-900">
@@ -31,12 +29,20 @@
               </router-link>
             </li>
             <li>
-              <router-link v-if="authStore.isAuthenticated" to="/my-donations" class="text-gray-600 hover:text-gray-900">
+              <router-link
+                v-if="authStore.isAuthenticated"
+                to="/my-donations"
+                class="text-gray-600 hover:text-gray-900"
+              >
                 My Donations
               </router-link>
             </li>
             <li>
-              <router-link v-if="authStore.isAuthenticated" to="/profile" class="text-gray-600 hover:text-gray-900">
+              <router-link
+                v-if="authStore.isAuthenticated"
+                to="/profile"
+                class="text-gray-600 hover:text-gray-900"
+              >
                 Profile
               </router-link>
             </li>
@@ -45,9 +51,7 @@
 
         <!-- Support -->
         <div>
-          <h3 class="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">
-            Support
-          </h3>
+          <h3 class="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Support</h3>
           <ul class="space-y-2">
             <li>
               <a href="mailto:csr@acme.com" class="text-gray-600 hover:text-gray-900">
@@ -55,19 +59,13 @@
               </a>
             </li>
             <li>
-              <a href="#" class="text-gray-600 hover:text-gray-900">
-                FAQ
-              </a>
+              <a href="#" class="text-gray-600 hover:text-gray-900"> FAQ </a>
             </li>
             <li>
-              <a href="#" class="text-gray-600 hover:text-gray-900">
-                Guidelines
-              </a>
+              <a href="#" class="text-gray-600 hover:text-gray-900"> Guidelines </a>
             </li>
             <li>
-              <a href="#" class="text-gray-600 hover:text-gray-900">
-                Privacy Policy
-              </a>
+              <a href="#" class="text-gray-600 hover:text-gray-900"> Privacy Policy </a>
             </li>
           </ul>
         </div>

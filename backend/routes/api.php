@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy']);
 
     // Donation routes
+    Route::get('/donations/my-stats', [DonationController::class, 'stats']);
     Route::get('/donations/my-donations', [DonationController::class, 'index']);
     Route::get('/donations/{donation}/receipt', [DonationController::class, 'receipt']);
     Route::get('/donations/{donation}', [DonationController::class, 'show']);

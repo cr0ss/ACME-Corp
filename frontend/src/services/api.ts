@@ -10,7 +10,7 @@ class ApiService {
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     })
 
@@ -32,7 +32,7 @@ class ApiService {
       },
       (error) => {
         return Promise.reject(error)
-      }
+      },
     )
 
     // Response interceptor to handle common errors
@@ -50,32 +50,57 @@ class ApiService {
         }
 
         return Promise.reject(error)
-      }
+      },
     )
   }
 
   // Generic API methods
-  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.get<T>(url, config)
     return response.data
   }
 
-  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  // Special method for file downloads that preserves headers
+  async getFile(url: string, config?: AxiosRequestConfig): Promise<{ data: Blob; filename?: string; contentType?: string }> {
+    const response = await this.api.get(url, { ...config, responseType: 'blob' })
+    
+    // Extract filename from Content-Disposition header
+    const contentDisposition = response.headers['content-disposition']
+    let filename: string | undefined
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '')
+      }
+    }
+    
+    // Extract content type
+    const contentType = response.headers['content-type']
+    
+    return {
+      data: response.data,
+      filename,
+      contentType
+    }
+  }
+
+  async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.post<T>(url, data, config)
     return response.data
   }
 
-  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.put<T>(url, data, config)
     return response.data
   }
 
-  async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.patch<T>(url, data, config)
     return response.data
   }
 
-  async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.delete<T>(url, config)
     return response.data
   }
@@ -138,6 +163,17 @@ export interface Donation {
   created_at: string
 }
 
+export interface DonationStats {
+  total_donated: number
+  total_donations: number
+  campaigns_supported: number
+  avg_donation: number
+  first_donation?: string
+  last_donation?: string
+  pending_donations: number
+  failed_donations: number
+}
+
 export interface LoginCredentials {
   email: string
   password: string
@@ -154,17 +190,18 @@ export const authApi = {
   login: (credentials: LoginCredentials): Promise<LoginResponse> =>
     apiService.post('/login', credentials),
 
-  logout: (): Promise<{ message: string }> =>
-    apiService.post('/logout'),
+  logout: (): Promise<{ message: string }> => apiService.post('/logout'),
 
-  getUser: (): Promise<{ user: User }> =>
-    apiService.get('/user'),
+  getUser: (): Promise<{ user: User }> => apiService.get('/user'),
 
   updateProfile: (data: Partial<User>): Promise<{ message: string; user: User }> =>
     apiService.put('/profile', data),
 
-  updatePassword: (data: { current_password: string; password: string; password_confirmation: string }): Promise<{ message: string }> =>
-    apiService.put('/profile/password', data),
+  updatePassword: (data: {
+    current_password: string
+    password: string
+    password_confirmation: string
+  }): Promise<{ message: string }> => apiService.put('/profile/password', data),
 }
 
 // Pagination response interface
@@ -180,13 +217,13 @@ export interface PaginatedResponse<T> {
 
 // Campaigns API
 export const campaignsApi = {
-  getAll: (params?: any): Promise<PaginatedResponse<Campaign>> =>
+  getAll: (params?: Record<string, unknown>): Promise<PaginatedResponse<Campaign>> =>
     apiService.get('/campaigns', { params }),
 
-  getMyCampaigns: (params?: any): Promise<PaginatedResponse<Campaign>> =>
+  getMyCampaigns: (params?: Record<string, unknown>): Promise<PaginatedResponse<Campaign>> =>
     apiService.get('/campaigns/my-campaigns', { params }),
 
-  getById: (id: number): Promise<{ campaign: Campaign; stats: any }> =>
+  getById: (id: number): Promise<{ campaign: Campaign; stats: Record<string, unknown> }> =>
     apiService.get(`/campaigns/${id}`),
 
   create: (data: Partial<Campaign>): Promise<{ message: string; campaign: Campaign }> =>
@@ -195,11 +232,9 @@ export const campaignsApi = {
   update: (id: number, data: Partial<Campaign>): Promise<{ message: string; campaign: Campaign }> =>
     apiService.put(`/campaigns/${id}`, data),
 
-  delete: (id: number): Promise<{ message: string }> =>
-    apiService.delete(`/campaigns/${id}`),
+  delete: (id: number): Promise<{ message: string }> => apiService.delete(`/campaigns/${id}`),
 
-  getTrending: (): Promise<PaginatedResponse<Campaign>> =>
-    apiService.get('/campaigns/trending'),
+  getTrending: (): Promise<PaginatedResponse<Campaign>> => apiService.get('/campaigns/trending'),
 
   getEndingSoon: (): Promise<PaginatedResponse<Campaign>> =>
     apiService.get('/campaigns/ending-soon'),
@@ -208,8 +243,7 @@ export const campaignsApi = {
     total_raised: string
     total_donations: number
     average_donation: string
-  }> =>
-    apiService.get('/campaigns/total-raised'),
+  }> => apiService.get('/campaigns/total-raised'),
 
   getStats: (): Promise<{
     active: number
@@ -217,53 +251,50 @@ export const campaignsApi = {
     cancelled: number
     draft: number
     total: number
-  }> =>
-    apiService.get('/campaigns/stats'),
+  }> => apiService.get('/campaigns/stats'),
 }
 
 // Categories API
 export const categoriesApi = {
-  getAll: (): Promise<CampaignCategory[]> =>
-    apiService.get('/categories'),
+  getAll: (): Promise<CampaignCategory[]> => apiService.get('/categories'),
 
-  getById: (id: number): Promise<CampaignCategory> =>
-    apiService.get(`/categories/${id}`),
+  getById: (id: number): Promise<CampaignCategory> => apiService.get(`/categories/${id}`),
 }
 
 // Donations API
 export const donationsApi = {
-  getMyDonations: (params?: any): Promise<PaginatedResponse<Donation>> =>
+  getStats: (): Promise<DonationStats> => apiService.get('/donations/my-stats'),
+
+  getMyDonations: (params?: Record<string, unknown>): Promise<PaginatedResponse<Donation>> =>
     apiService.get('/donations/my-donations', { params }),
 
-  getAll: (params?: any): Promise<PaginatedResponse<Donation>> =>
+  getAll: (params?: Record<string, unknown>): Promise<PaginatedResponse<Donation>> =>
     apiService.get('/admin/donations', { params }),
 
-  create: (data: any): Promise<{ message: string; donation: Donation }> =>
+  create: (data: Record<string, unknown>): Promise<{ message: string; donation: Donation }> =>
     apiService.post('/donations', data),
 
-  getById: (id: number): Promise<Donation> =>
-    apiService.get(`/donations/${id}`),
+  getById: (id: number): Promise<Donation> => apiService.get(`/donations/${id}`),
 
-  getReceipt: (id: number): Promise<any> =>
-    apiService.get(`/donations/${id}/receipt`),
+  getReceipt: (id: number): Promise<{ data: Blob; filename?: string; contentType?: string }> => 
+    apiService.getFile(`/donations/${id}/receipt`),
 }
 
 // Users API (Admin)
 export const usersApi = {
-  getAll: (params?: any): Promise<PaginatedResponse<User>> =>
+  getAll: (params?: Record<string, unknown>): Promise<PaginatedResponse<User>> =>
     apiService.get('/admin/users', { params }),
 
-  getById: (id: number): Promise<User> =>
-    apiService.get(`/admin/users/${id}`),
+  getById: (id: number): Promise<User> => apiService.get(`/admin/users/${id}`),
 
-  create: (data: Partial<User> & { password: string; password_confirmation: string }): Promise<User> =>
-    apiService.post('/admin/users', data),
+  create: (
+    data: Partial<User> & { password: string; password_confirmation: string },
+  ): Promise<User> => apiService.post('/admin/users', data),
 
   update: (id: number, data: Partial<User>): Promise<User> =>
     apiService.put(`/admin/users/${id}`, data),
 
-  delete: (id: number): Promise<void> =>
-    apiService.delete(`/admin/users/${id}`),
+  delete: (id: number): Promise<void> => apiService.delete(`/admin/users/${id}`),
 
   getStatistics: (): Promise<{
     overview: {
@@ -275,23 +306,29 @@ export const usersApi = {
     departments: Array<{ department: string; count: number }>
     roles: Array<{ role: string; count: number }>
     registration_trend: Array<{ date: string; count: number }>
-  }> =>
-    apiService.get('/admin/users/statistics'),
+  }> => apiService.get('/admin/users/statistics'),
 
   bulkUpdate: (data: {
     user_ids: number[]
-    action: 'activate' | 'deactivate' | 'change_department' | 'change_role' | 'make_admin' | 'remove_admin'
+    action:
+      | 'activate'
+      | 'deactivate'
+      | 'change_department'
+      | 'change_role'
+      | 'make_admin'
+      | 'remove_admin'
     value?: string
   }): Promise<{ message: string; updated_users: number[]; total_updated: number }> =>
     apiService.post('/admin/users/bulk-update', data),
 
-  export: (params?: any): Promise<{
-    data: any[]
+  export: (
+    params?: Record<string, unknown>,
+  ): Promise<{
+    data: unknown[]
     format: string
     filename: string
     count: number
-  }> =>
-    apiService.get('/export/users', { params }),
+  }> => apiService.get('/export/users', { params }),
 }
 
 // Reports API (Admin)
@@ -349,17 +386,23 @@ export interface CampaignReport {
     avg_raised: number
     success_rate: number
   }
-  by_status: Record<string, {
-    count: number
-    total_target: number
-    total_raised: number
-  }>
-  by_category: Record<string, {
-    count: number
-    total_target: number
-    total_raised: number
-    avg_progress: number
-  }>
+  by_status: Record<
+    string,
+    {
+      count: number
+      total_target: number
+      total_raised: number
+    }
+  >
+  by_category: Record<
+    string,
+    {
+      count: number
+      total_target: number
+      total_raised: number
+      avg_progress: number
+    }
+  >
   performance_ranges: {
     '0-25%': number
     '25-50%': number
@@ -390,13 +433,16 @@ export interface UserEngagementReport {
     avg_donations_per_user: number
     avg_amount_per_user: number
   }
-  by_department: Record<string, {
-    total_users: number
-    active_users: number
-    total_donations: number
-    total_amount: number
-    engagement_rate: number
-  }>
+  by_department: Record<
+    string,
+    {
+      total_users: number
+      active_users: number
+      total_donations: number
+      total_amount: number
+      engagement_rate: number
+    }
+  >
   participation_levels: {
     non_participants: number
     light_participants: number
@@ -473,12 +519,11 @@ export const reportsApi = {
     start_date?: string
     end_date?: string
   }): Promise<{
-    data: any[]
+    data: unknown[]
     type: string
     format: string
     filename: string
     count: number
     generated_at: string
-  }> =>
-    apiService.post('/admin/export', data),
+  }> => apiService.post('/admin/export', data),
 }

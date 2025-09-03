@@ -7,18 +7,8 @@
         Sorry, the page you're looking for doesn't exist or has been moved.
       </p>
       <div class="space-y-4">
-        <router-link
-          to="/"
-          class="btn-primary block"
-        >
-          Go Back Home
-        </router-link>
-        <router-link
-          to="/campaigns"
-          class="btn-secondary block"
-        >
-          Browse Campaigns
-        </router-link>
+        <router-link to="/" class="btn-primary block"> Go Back Home </router-link>
+        <router-link to="/campaigns" class="btn-secondary block"> Browse Campaigns </router-link>
       </div>
     </div>
   </div>

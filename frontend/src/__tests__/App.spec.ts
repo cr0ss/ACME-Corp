@@ -10,7 +10,7 @@ vi.mock('@/services/api', () => ({
     getUser: vi.fn(),
     updateProfile: vi.fn(),
     updatePassword: vi.fn(),
-  }
+  },
 }))
 
 describe('App', () => {
@@ -22,12 +22,12 @@ describe('App', () => {
     const wrapper = await mountWithDependencies(App, {
       route: '/',
       stubs: {
-        DefaultLayout: { 
-          template: '<div class="default-layout-stub"><slot /></div>' 
+        DefaultLayout: {
+          template: '<div class="default-layout-stub"><slot /></div>',
         },
         AppNavigation: { template: '<nav>Navigation</nav>' },
-        AppFooter: { template: '<footer>Footer</footer>' }
-      }
+        AppFooter: { template: '<footer>Footer</footer>' },
+      },
     })
 
     expect(wrapper.find('#app').exists()).toBe(true)
@@ -39,10 +39,10 @@ describe('App', () => {
     const wrapper = await mountWithDependencies(App, {
       route: '/login',
       stubs: {
-        DefaultLayout: { 
-          template: '<div class="default-layout-stub"><slot /></div>' 
-        }
-      }
+        DefaultLayout: {
+          template: '<div class="default-layout-stub"><slot /></div>',
+        },
+      },
     })
 
     expect(wrapper.find('#app').exists()).toBe(true)
@@ -56,10 +56,10 @@ describe('App', () => {
     const wrapper = await mountWithDependencies(App, {
       route: '/',
       stubs: {
-        DefaultLayout: { 
-          template: '<div class="default-layout-stub"><slot /></div>' 
-        }
-      }
+        DefaultLayout: {
+          template: '<div class="default-layout-stub"><slot /></div>',
+        },
+      },
     })
 
     // The auth store should be initialized

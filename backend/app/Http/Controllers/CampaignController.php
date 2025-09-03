@@ -212,6 +212,9 @@ class CampaignController extends Controller
      */
     public function show(Campaign $campaign)
     {
+        // Update campaign status based on current state
+        $campaign->updateStatus();
+        
         $campaign->load(['category', 'user', 'donations.user']);
         
         return response()->json([
