@@ -204,6 +204,9 @@ launch: ## Complete initial launch: setup, install, and start development
 	@docker-compose ps postgres | grep -q "Up" || { echo "❌ PostgreSQL container is not running"; echo "   Check Docker logs with: make logs"; exit 1; }
 	@echo "✅ PostgreSQL container is running"
 	@echo ""
+	@echo "📦 Installing backend dependencies..."
+	@docker-compose exec -T backend composer install --no-interaction --optimize-autoloader
+	@echo ""
 	@echo "🔍 Checking database connectivity..."
 	@echo "⏳ Waiting for database to be ready..."
 	@for i in 1 2 3 4 5 6; do \
@@ -220,9 +223,6 @@ launch: ## Complete initial launch: setup, install, and start development
 			sleep 10; \
 		fi; \
 	done
-	@echo ""
-	@echo "📦 Installing backend dependencies..."
-	@docker-compose exec -T backend composer install --no-interaction --optimize-autoloader
 	@echo ""
 	@echo "🔑 Generating application key..."
 	@docker-compose exec -T backend php artisan key:generate --force
