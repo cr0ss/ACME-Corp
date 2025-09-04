@@ -1,0 +1,200 @@
+version: '3.8'
+
+services:
+  # Laravel Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: acme_backend
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    entrypoint: ["/bin/sh", "-c", "php-fpm"]
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=acme_csr
+      - DB_USERNAME=acme_user
+      - DB_PASSWORD=acme_password
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=null
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=mailhog
+      - MAIL_PORT=1025
+      - MAIL_USERNAME=null
+      - MAIL_PASSWORD=null
+      - MAIL_ENCRYPTION=null
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - acme_network
+
+  # Vue.js Frontend SPA
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: acme_frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api
+      - VITE_APP_NAME=ACME CSR Platform
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - acme_network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: acme_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: acme_csr
+      POSTGRES_USER: acme_user
+      POSTGRES_PASSWORD: acme_password
+      POSTGRES_ROOT_PASSWORD: acme_root_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - acme_network
+
+  # Redis Cache & Sessions
+  redis:
+    image: redis:7-alpine
+    container_name: acme_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --replica-read-only no
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - acme_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: acme_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+      - "8443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./backend/public:/var/www/html/public
+      - ./backend/storage/app/public:/var/www/html/storage/app/public
+    depends_on:
+      - backend
+    networks:
+      - acme_network
+
+  # MailHog for Email Testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: acme_mailhog
+    restart: unless-stopped
+    ports:
+      - "1026:1025"  # SMTP (changed from 1025 to 1026)
+      - "8026:8025"  # Web UI (changed from 8025 to 8026)
+    networks:
+      - acme_network
+
+  # Queue Worker
+  queue:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: acme_queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    environment:
+      - APP_ENV=local
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=acme_csr
+      - DB_USERNAME=acme_user
+      - DB_PASSWORD=acme_password
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=null
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+    command: php artisan queue:work --verbose --tries=3 --timeout=300
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    networks:
+      - acme_network
+
+  # Scheduler (Cron jobs)
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: acme_scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    environment:
+      - APP_ENV=local
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=acme_csr
+      - DB_USERNAME=acme_user
+      - DB_PASSWORD=acme_password
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=null
+      - REDIS_PORT=6379
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run --verbose --no-interaction &
+        sleep 60
+      done"
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    networks:
+      - acme_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  acme_network:
+    driver: bridge
