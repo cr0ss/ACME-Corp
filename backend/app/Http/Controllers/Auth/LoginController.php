@@ -14,7 +14,7 @@ class LoginController extends Controller
     /**
      * Handle employee login request.
      */
-    public function login(Request $request)
+    public function login(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'email' => 'required|email',

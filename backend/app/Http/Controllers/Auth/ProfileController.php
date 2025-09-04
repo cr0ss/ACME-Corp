@@ -13,9 +13,13 @@ class ProfileController extends Controller
     /**
      * Get the authenticated user's profile.
      */
-    public function show(Request $request)
+    public function show(Request $request): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
 
         return response()->json([
             'user' => [
@@ -35,9 +39,13 @@ class ProfileController extends Controller
     /**
      * Update the authenticated user's profile.
      */
-    public function update(Request $request)
+    public function update(Request $request): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
         
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -80,9 +88,13 @@ class ProfileController extends Controller
     /**
      * Update the authenticated user's password.
      */
-    public function updatePassword(Request $request)
+    public function updatePassword(Request $request): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
 
         $request->validate([
             'current_password' => 'required|string',

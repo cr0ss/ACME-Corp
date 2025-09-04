@@ -9,12 +9,6 @@ use Illuminate\Support\Str;
 
 class PayPalPaymentProvider implements PaymentProviderInterface
 {
-    public function __construct(
-        private string $clientId,
-        private string $clientSecret,
-        private bool $sandbox = true
-    ) {}
-
     public function processPayment(Donation $donation, array $paymentData): PaymentResult
     {
         // TODO: Implement actual PayPal integration

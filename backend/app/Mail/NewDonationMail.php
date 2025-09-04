@@ -24,8 +24,8 @@ class NewDonationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New donation received for ' . $this->donation->campaign->title,
             from: config('mail.from.address'),
+            subject: 'New donation received for ' . $this->donation->campaign->title,
         );
     }
 

@@ -143,6 +143,28 @@ export interface Campaign {
   updated_at: string
 }
 
+export interface CreateCampaign {
+  title: string
+  description: string
+  target_amount: number
+  start_date: string
+  end_date: string
+  category_id: number
+  featured?: boolean
+  status?: 'draft' | 'active' | 'completed' | 'cancelled'
+}
+
+export interface UpdateCampaign {
+  title?: string
+  description?: string
+  target_amount?: number
+  start_date?: string
+  end_date?: string
+  category_id?: number
+  featured?: boolean
+  status?: 'draft' | 'active' | 'completed' | 'cancelled'
+}
+
 export interface CampaignCategory {
   id: number
   name: string

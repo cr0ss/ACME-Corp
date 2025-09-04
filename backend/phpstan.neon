@@ -2,16 +2,10 @@ includes:
     - ./vendor/larastan/larastan/extension.neon
 
 parameters:
-    level: 5
+    level: 8
     paths:
         - app/
         - config/
         - database/
         - routes/
     excludePaths: []
-    
-    # Laravel specific settings
-    ignoreErrors:
-        - '#Property .* is never read, only written#'
-        - '#Using nullsafe method call on non-nullable type Illuminate\\Http\\Request#'
-        - '#Using nullsafe property access.*on left side of \?\? is unnecessary#'

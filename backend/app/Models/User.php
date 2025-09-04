@@ -82,6 +82,8 @@ class User extends Authenticatable
 
     /**
      * Get campaigns created by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Campaign, $this>
      */
     public function campaigns(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -90,6 +92,8 @@ class User extends Authenticatable
 
     /**
      * Get donations made by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Donation, $this>
      */
     public function donations(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -98,6 +102,8 @@ class User extends Authenticatable
 
     /**
      * Get audit logs for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<AuditLog, $this>
      */
     public function auditLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

@@ -84,7 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
             $campaign->update(['featured' => $request->boolean('featured')]);
             
             AuditLog::createLog(
-                $request->user()->id,
+                $request->user()?->id,
                 'campaign_featured_updated',
                 'App\Models\Campaign',
                 $campaign->id,

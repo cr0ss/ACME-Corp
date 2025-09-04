@@ -12,6 +12,8 @@ class CampaignService
 {
     /**
      * Create a new campaign.
+     *
+     * @param array<string, mixed> $data
      */
     public function createCampaign(array $data, User $creator): Campaign
     {
@@ -31,8 +33,8 @@ class CampaignService
                 $campaign->id,
                 null,
                 $campaign->toArray(),
-                request()?->ip(),
-                request()?->userAgent()
+                request()->ip(),
+                request()->userAgent()
             );
 
             return $campaign;
@@ -41,8 +43,10 @@ class CampaignService
 
     /**
      * Update a campaign.
+     *
+     * @param array<string, mixed> $data
      */
-    public function updateCampaign(Campaign $campaign, array $data, User $user): Campaign
+    public function updateCampaign(Campaign $campaign, array $data, User $user): Campaign|null
     {
         return DB::transaction(function () use ($campaign, $data, $user) {
             $oldValues = $campaign->toArray();
@@ -50,15 +54,16 @@ class CampaignService
             $campaign->update($data);
 
             // Log campaign update
+            $freshCampaign = $campaign->fresh();
             AuditLog::createLog(
                 $user->id,
                 'campaign_updated',
                 'App\Models\Campaign',
                 $campaign->id,
                 $oldValues,
-                $campaign->fresh()->toArray(),
-                request()?->ip(),
-                request()?->userAgent()
+                $freshCampaign ? $freshCampaign->toArray() : [],
+                request()->ip(),
+                request()->userAgent()
             );
 
             return $campaign->fresh();
@@ -68,7 +73,7 @@ class CampaignService
     /**
      * Delete a campaign.
      */
-    public function deleteCampaign(Campaign $campaign, User $user): bool
+    public function deleteCampaign(Campaign $campaign, User $user): bool|null
     {
         // Check if campaign can be deleted
         if ($campaign->donations()->count() > 0) {
@@ -84,8 +89,8 @@ class CampaignService
                 $campaign->id,
                 $campaign->toArray(),
                 null,
-                request()?->ip(),
-                request()?->userAgent()
+                request()->ip(),
+                request()->userAgent()
             );
 
             return $campaign->delete();
@@ -95,7 +100,7 @@ class CampaignService
     /**
      * Approve a campaign (admin only).
      */
-    public function approveCampaign(Campaign $campaign, User $admin): Campaign
+    public function approveCampaign(Campaign $campaign, User $admin): Campaign|null
     {
         if (!$admin->is_admin) {
             throw new \Exception('Only administrators can approve campaigns');
@@ -107,7 +112,7 @@ class CampaignService
     /**
      * Reject a campaign (admin only).
      */
-    public function rejectCampaign(Campaign $campaign, User $admin, ?string $reason = null): Campaign
+    public function rejectCampaign(Campaign $campaign, User $admin, ?string $reason = null): Campaign|null
     {
         if (!$admin->is_admin) {
             throw new \Exception('Only administrators can reject campaigns');
@@ -119,7 +124,7 @@ class CampaignService
     /**
      * Feature/unfeature a campaign (admin only).
      */
-    public function toggleFeatured(Campaign $campaign, User $admin, bool $featured = true): Campaign
+    public function toggleFeatured(Campaign $campaign, User $admin, bool $featured = true): Campaign|null
     {
         if (!$admin->is_admin) {
             throw new \Exception('Only administrators can feature campaigns');
@@ -138,8 +143,8 @@ class CampaignService
                 $campaign->id,
                 $oldValues,
                 ['featured' => $featured],
-                request()?->ip(),
-                request()?->userAgent()
+                request()->ip(),
+                request()->userAgent()
             );
 
             return $campaign->fresh();
@@ -148,6 +153,8 @@ class CampaignService
 
     /**
      * Get campaign statistics.
+     *
+     * @return array<string, mixed>
      */
     public function getCampaignStats(Campaign $campaign): array
     {
@@ -166,6 +173,8 @@ class CampaignService
 
     /**
      * Get trending campaigns.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Campaign>
      */
     public function getTrendingCampaigns(int $limit = 10): \Illuminate\Database\Eloquent\Collection
     {
@@ -173,7 +182,7 @@ class CampaignService
             ->where('status', 'active')
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
-            ->withCount(['donations' => function ($query) {
+            ->withCount(['donations' => function ($query): void {
                 $query->where('status', 'completed')
                       ->where('created_at', '>=', now()->subDays(7)); // Last 7 days
             }])
@@ -185,6 +194,8 @@ class CampaignService
 
     /**
      * Get campaigns ending soon.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Campaign>
      */
     public function getCampaignsEndingSoon(int $days = 7, int $limit = 10): \Illuminate\Database\Eloquent\Collection
     {
@@ -209,7 +220,7 @@ class CampaignService
     /**
      * Update campaign status.
      */
-    private function updateCampaignStatus(Campaign $campaign, string $status, User $user, ?string $reason = null): Campaign
+    private function updateCampaignStatus(Campaign $campaign, string $status, User $user, ?string $reason = null): Campaign|null
     {
         return DB::transaction(function () use ($campaign, $status, $user, $reason) {
             $oldValues = ['status' => $campaign->status];
@@ -229,8 +240,8 @@ class CampaignService
                 $campaign->id,
                 $oldValues,
                 $newValues,
-                request()?->ip(),
-                request()?->userAgent()
+                request()->ip(),
+                request()->userAgent()
             );
 
             return $campaign->fresh();

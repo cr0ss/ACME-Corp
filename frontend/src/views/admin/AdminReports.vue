@@ -198,7 +198,7 @@
                     </div>
                     <div class="text-right">
                       <div class="font-bold">
-                        {{ formatCurrency(campaign.total_raised || campaign.current_amount) }}
+                        {{ formatCurrency(campaign.current_amount) }}
                       </div>
                     </div>
                   </div>
@@ -218,8 +218,8 @@
                       <div class="text-sm text-gray-500">{{ donor.department }}</div>
                     </div>
                     <div class="text-right">
-                      <div class="font-bold">{{ formatCurrency(donor.total_donated) }}</div>
-                      <div class="text-sm text-gray-500">{{ donor.donations_count }} donations</div>
+                      <div class="font-bold">{{ formatCurrency(donor.total_donated || 0) }}</div>
+                      <div class="text-sm text-gray-500">{{ donor.donation_count || 0 }} donations</div>
                     </div>
                   </div>
                 </div>
@@ -601,11 +601,11 @@ const activeTab = ref('financial')
 // Date range
 const startDate = ref('')
 const endDate = ref('')
-const groupBy = ref('month')
+const groupBy = ref<'day' | 'week' | 'month' | 'quarter'>('month')
 
 // Export options
-const selectedExportType = ref('financial')
-const selectedExportFormat = ref('csv')
+const selectedExportType = ref<'donations' | 'campaigns' | 'users' | 'financial' | 'impact'>('financial')
+const selectedExportFormat = ref<'csv' | 'json' | 'excel'>('csv')
 
 // Report data
 const financialReport = ref<FinancialReport | null>(null)
@@ -679,8 +679,8 @@ async function exportData() {
   isExporting.value = true
   try {
     const exportData = await reportsApi.exportData({
-          type: selectedExportType.value as string,
-    format: selectedExportFormat.value as string,
+      type: selectedExportType.value,
+      format: selectedExportFormat.value,
       start_date: startDate.value,
       end_date: endDate.value,
     })
@@ -713,13 +713,14 @@ async function exportData() {
   function convertToCSV(data: unknown[]): string {
   if (!data.length) return ''
 
-  const headers = Object.keys(data[0])
+  const firstRow = data[0] as Record<string, unknown>
+  const headers = Object.keys(firstRow)
   const csvContent = [
     headers.join(','),
     ...data.map((row) =>
       headers
         .map((header) => {
-          const value = row[header]
+          const value = (row as Record<string, unknown>)[header]
           return typeof value === 'string' && value.includes(',') ? `"${value}"` : value
         })
         .join(','),

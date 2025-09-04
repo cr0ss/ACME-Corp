@@ -37,7 +37,8 @@ class CampaignFactory extends Factory
             'category_id' => function (array $attributes) {
                 // If category_id is provided in the factory call, use it
                 // Otherwise, use an existing category or create a new one
-                return CampaignCategory::inRandomOrder()->first()?->id ?? CampaignCategory::factory();
+                $category = CampaignCategory::inRandomOrder()->first();
+                return $category ? $category->id : CampaignCategory::factory();
             },
             'user_id' => User::factory(),
             'featured' => $this->faker->boolean(20), // 20% chance of being featured

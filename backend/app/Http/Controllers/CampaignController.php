@@ -13,17 +13,16 @@ class CampaignController extends Controller
 {
     /**
      * Get all campaigns with filtering and pagination.
-     * 
-     * Retrieves a paginated list of campaigns with optional filtering by status, category, 
+     *
+     * Retrieves a paginated list of campaigns with optional filtering by status, category,
      * search query, and other parameters. Excludes draft campaigns by default.
-     * 
-     * @param \Illuminate\Http\Request $request
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
         // Validate pagination and filtering parameters
-        $validated = $request->validate([
+        $request->validate([
             'page' => 'integer|min:1',
             'per_page' => 'integer|min:1|max:100',
             'category_id' => 'integer|exists:campaign_categories,id',
@@ -48,7 +47,7 @@ class CampaignController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('title', 'ILIKE', "%{$search}%")
                   ->orWhere('description', 'ILIKE', "%{$search}%");
             });
@@ -71,10 +70,10 @@ class CampaignController extends Controller
     /**
      * Display a listing of all campaigns for admin.
      */
-    public function adminIndex(Request $request)
+    public function adminIndex(Request $request): \Illuminate\Http\JsonResponse
     {
         // Validate pagination and filtering parameters
-        $validated = $request->validate([
+        $request->validate([
             'page' => 'integer|min:1',
             'per_page' => 'integer|min:1|max:100',
             'category_id' => 'integer|exists:campaign_categories,id',
@@ -99,10 +98,10 @@ class CampaignController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('title', 'ILIKE', "%{$search}%")
                   ->orWhere('description', 'ILIKE', "%{$search}%")
-                  ->orWhereHas('user', function ($userQuery) use ($search) {
+                  ->orWhereHas('user', function ($userQuery) use ($search): void {
                       $userQuery->where('name', 'ILIKE', "%{$search}%")
                                ->orWhere('email', 'ILIKE', "%{$search}%");
                   });
@@ -126,10 +125,10 @@ class CampaignController extends Controller
     /**
      * Get campaigns for the authenticated user.
      */
-    public function myCampaigns(Request $request)
+    public function myCampaigns(Request $request): \Illuminate\Http\JsonResponse
     {
         // Validate pagination and filtering parameters
-        $validated = $request->validate([
+        $request->validate([
             'page' => 'integer|min:1',
             'per_page' => 'integer|min:1|max:100',
             'status' => 'string|in:active,completed,cancelled,draft',
@@ -138,8 +137,13 @@ class CampaignController extends Controller
             'sort_order' => 'string|in:asc,desc',
         ]);
 
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         $query = Campaign::with(['category', 'user'])
-            ->where('user_id', $request->user()->id);
+            ->where('user_id', $user->id);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -148,7 +152,7 @@ class CampaignController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('title', 'ILIKE', "%{$search}%")
                   ->orWhere('description', 'ILIKE', "%{$search}%");
             });
@@ -167,7 +171,7 @@ class CampaignController extends Controller
     /**
      * Store a newly created campaign.
      */
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'title' => 'required|string|max:255',
@@ -178,6 +182,11 @@ class CampaignController extends Controller
             'category_id' => 'required|exists:campaign_categories,id',
         ]);
 
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         $campaign = Campaign::create([
             'title' => $request->title,
             'description' => $request->description,
@@ -185,13 +194,13 @@ class CampaignController extends Controller
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'category_id' => $request->category_id,
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'status' => 'draft', // All user-created campaigns start as drafts for admin approval
         ]);
 
         // Log the campaign creation
         AuditLog::createLog(
-            $request->user()->id,
+            $user->id,
             'campaign_created',
             'App\Models\Campaign',
             $campaign->id,
@@ -210,13 +219,13 @@ class CampaignController extends Controller
     /**
      * Display the specified campaign.
      */
-    public function show(Campaign $campaign)
+    public function show(Campaign $campaign): \Illuminate\Http\JsonResponse
     {
         // Update campaign status based on current state
         $campaign->updateStatus();
-        
+
         $campaign->load(['category', 'user', 'donations.user']);
-        
+
         return response()->json([
             'campaign' => $campaign,
             'stats' => [
@@ -231,10 +240,15 @@ class CampaignController extends Controller
     /**
      * Update the specified campaign.
      */
-    public function update(Request $request, Campaign $campaign)
+    public function update(Request $request, Campaign $campaign): \Illuminate\Http\JsonResponse
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         // Check if user owns the campaign or is admin
-        if ($campaign->user_id !== $request->user()->id && !$request->user()->is_admin) {
+        if ($campaign->user_id !== $user->id && !$user->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -248,37 +262,35 @@ class CampaignController extends Controller
         ];
 
         // Only admins can change status
-        if ($request->user()->is_admin) {
+        if ($user->is_admin) {
             $validationRules['status'] = 'sometimes|in:draft,active,completed';
         }
 
         $request->validate($validationRules);
 
         // Additional validation for date relationship if both dates are being updated
-        if ($request->has('start_date') && $request->has('end_date')) {
-            if (strtotime($request->end_date) <= strtotime($request->start_date)) {
-                return response()->json([
-                    'message' => 'The end date must be after the start date.',
-                    'errors' => ['end_date' => ['The end date must be after the start date.']]
-                ], 422);
-            }
+        if ($request->has('start_date') && $request->has('end_date') && strtotime($request->end_date) <= strtotime($request->start_date)) {
+            return response()->json([
+                'message' => 'The end date must be after the start date.',
+                'errors' => ['end_date' => ['The end date must be after the start date.']]
+            ], 422);
         }
 
         $oldValues = $campaign->toArray();
-        
+
         // Define updateable fields for regular users
         $updateableFields = ['title', 'description', 'target_amount', 'start_date', 'end_date', 'category_id'];
-        
+
         // Add status to updateable fields only for admins
-        if ($request->user()->is_admin && $request->has('status')) {
+        if ($user->is_admin && $request->has('status')) {
             $updateableFields[] = 'status';
         }
-        
+
         $campaign->update($request->only($updateableFields));
 
         // Log the campaign update
         AuditLog::createLog(
-            $request->user()->id,
+            $user->id,
             'campaign_updated',
             'App\Models\Campaign',
             $campaign->id,
@@ -297,10 +309,15 @@ class CampaignController extends Controller
     /**
      * Remove the specified campaign.
      */
-    public function destroy(Request $request, Campaign $campaign)
+    public function destroy(Request $request, Campaign $campaign): \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         // Check if user owns the campaign or is admin
-        if ($campaign->user_id !== $request->user()->id && !$request->user()->is_admin) {
+        if ($campaign->user_id !== $user->id && !$user->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -313,7 +330,7 @@ class CampaignController extends Controller
 
         // Log the campaign deletion
         AuditLog::createLog(
-            $request->user()->id,
+            $user->id,
             'campaign_deleted',
             'App\Models\Campaign',
             $campaign->id,
@@ -331,7 +348,7 @@ class CampaignController extends Controller
     /**
      * Get trending campaigns.
      */
-    public function trending()
+    public function trending(): \Illuminate\Http\JsonResponse
     {
         $campaigns = Campaign::with(['category', 'user'])
             ->where('status', 'active')
@@ -358,7 +375,7 @@ class CampaignController extends Controller
     /**
      * Get campaigns ending soon.
      */
-    public function endingSoon()
+    public function endingSoon(): \Illuminate\Http\JsonResponse
     {
         $campaigns = Campaign::with(['category', 'user'])
             ->where('status', 'active')
@@ -383,14 +400,12 @@ class CampaignController extends Controller
 
     /**
      * Get campaign statistics by status.
-     * 
+     *
      * Returns the count of campaigns grouped by their status (active, completed, cancelled, draft),
-     * plus total count and featured campaigns count. This endpoint provides efficient statistics 
+     * plus total count and featured campaigns count. This endpoint provides efficient statistics
      * without fetching full campaign data.
-     * 
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function stats()
+    public function stats(): \Illuminate\Http\JsonResponse
     {
         $stats = Campaign::selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
@@ -400,7 +415,7 @@ class CampaignController extends Controller
         // Ensure all statuses are present with 0 counts if they don't exist
         $allStatuses = ['active', 'completed', 'cancelled', 'draft'];
         $result = [];
-        
+
         foreach ($allStatuses as $status) {
             $result[$status] = $stats[$status] ?? 0;
         }
@@ -416,22 +431,20 @@ class CampaignController extends Controller
 
     /**
      * Get total amount raised across all campaigns.
-     * 
+     *
      * Returns the total amount raised from all completed donations across all campaigns.
      * This provides a simple platform-wide total without campaign breakdowns.
-     * 
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function totalRaised()
+    public function totalRaised(): \Illuminate\Http\JsonResponse
     {
         $totalRaised = Donation::where('status', 'completed')->sum('amount');
         $totalDonations = Donation::where('status', 'completed')->count();
         $avgDonation = $totalDonations > 0 ? $totalRaised / $totalDonations : 0;
 
         return response()->json([
-            'total_raised' => number_format($totalRaised, 2, '.', ''),
+            'total_raised' => number_format((float) $totalRaised, 2, '.', ''),
             'total_donations' => $totalDonations,
-            'average_donation' => number_format($avgDonation, 2, '.', ''),
+            'average_donation' => number_format((float) $avgDonation, 2, '.', ''),
         ]);
     }
 }

@@ -6,6 +6,8 @@ import {
   apiService,
   type Campaign,
   type CampaignCategory,
+  type CreateCampaign,
+  type UpdateCampaign,
 } from '@/services/api'
 
 export const useCampaignsStore = defineStore('campaigns', () => {
@@ -87,7 +89,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     }
   }
 
-  async function createCampaign(data: Partial<Campaign>) {
+  async function createCampaign(data: CreateCampaign) {
     isLoading.value = true
     error.value = null
 
@@ -104,7 +106,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     }
   }
 
-  async function updateCampaign(id: number, data: Partial<Campaign>) {
+  async function updateCampaign(id: number, data: UpdateCampaign) {
     isLoading.value = true
     error.value = null
 

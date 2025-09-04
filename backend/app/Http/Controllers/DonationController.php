@@ -18,9 +18,14 @@ class DonationController extends Controller
     /**
      * Get user's donation statistics.
      */
-    public function stats(Request $request)
+    public function stats(Request $request): \Illuminate\Http\JsonResponse
     {
-        $userId = $request->user()->id;
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
+        $userId = $user->id;
 
         $stats = [
             'total_donated' => Donation::where('user_id', $userId)
@@ -58,16 +63,21 @@ class DonationController extends Controller
     /**
      * Display a listing of user's donations.
      */
-    public function index(Request $request)
+    public function index(Request $request): \Illuminate\Http\JsonResponse
     {
         // Validate pagination parameters
-        $validated = $request->validate([
+        $request->validate([
             'page' => 'integer|min:1',
             'per_page' => 'integer|min:1|max:100',
         ]);
 
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         $donations = Donation::with(['campaign', 'campaign.category'])
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 15));
 
@@ -77,15 +87,20 @@ class DonationController extends Controller
     /**
      * Display all donations (admin only).
      */
-    public function all(Request $request)
+    public function all(Request $request): \Illuminate\Http\JsonResponse
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         // Check if user is admin
-        if (!$request->user()->is_admin) {
+        if (!$user->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         // Validate pagination parameters
-        $validated = $request->validate([
+        $request->validate([
             'page' => 'integer|min:1',
             'per_page' => 'integer|min:1|max:100',
         ]);
@@ -100,13 +115,13 @@ class DonationController extends Controller
     /**
      * Store a newly created donation.
      */
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'campaign_id' => [
                 'required',
                 'exists:campaigns,id',
-                Rule::exists('campaigns', 'id')->where(function ($query) {
+                Rule::exists('campaigns', 'id')->where(function ($query): void {
                     $query->where('status', 'active');
                 }),
             ],
@@ -116,7 +131,11 @@ class DonationController extends Controller
             'message' => 'nullable|string|max:500',
         ]);
 
+        /** @var \App\Models\Campaign|null $campaign */
         $campaign = Campaign::find($request->campaign_id);
+        if (!$campaign) {
+            return response()->json(['message' => 'Campaign not found'], 404);
+        }
 
         // Check if campaign is active and accepting donations
         if ($campaign->status !== 'active') {
@@ -134,7 +153,7 @@ class DonationController extends Controller
         try {
             // Use DonationService to create donation and process payment
             $donationService = app(DonationService::class);
-            
+
             $donationData = [
                 'campaign_id' => $request->campaign_id,
                 'amount' => $request->amount,
@@ -144,11 +163,19 @@ class DonationController extends Controller
                 'provider' => 'mock', // For now, using mock provider
             ];
 
-            $donation = $donationService->createDonation($donationData, $request->user());
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['message' => 'User not authenticated'], 401);
+            }
+
+            $donation = $donationService->createDonation($donationData, $user);
+            if (!$donation) {
+                return response()->json(['message' => 'Failed to create donation'], 500);
+            }
 
             // Log the donation
             AuditLog::createLog(
-                $request->user()->id,
+                $user->id,
                 'donation_created',
                 'App\Models\Donation',
                 $donation->id,
@@ -162,7 +189,7 @@ class DonationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-            
+
             return response()->json([
                 'message' => 'Failed to process donation',
                 'error' => $e->getMessage(),
@@ -173,10 +200,15 @@ class DonationController extends Controller
     /**
      * Display the specified donation.
      */
-    public function show(Request $request, Donation $donation)
+    public function show(Request $request, Donation $donation): \Illuminate\Http\JsonResponse
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         // Check if user owns the donation or is admin
-        if ($donation->user_id !== $request->user()->id && !$request->user()->is_admin) {
+        if ($donation->user_id !== $user->id && !$user->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -188,10 +220,15 @@ class DonationController extends Controller
     /**
      * Get donation receipt.
      */
-    public function receipt(Request $request, \App\Models\Donation $donation)
+    public function receipt(Request $request, \App\Models\Donation $donation): \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         // Check if user owns the donation or is admin
-        if ($donation->user_id !== $request->user()->id && !$request->user()->is_admin) {
+        if ($donation->user_id !== $user->id && !$user->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -207,7 +244,7 @@ class DonationController extends Controller
             'donation_id' => $donation->id,
             'receipt_number' => 'RCP_' . $donation->id . '_' . now()->format('Ymd'),
             'amount' => $donation->amount,
-            'date' => $donation->created_at->format('F j, Y'),
+            'date' => $donation->created_at?->format('F j, Y') ?? 'Unknown',
             'campaign' => [
                 'id' => $donation->campaign->id,
                 'title' => $donation->campaign->title,
@@ -229,13 +266,12 @@ class DonationController extends Controller
 
         // Generate PDF
         try {
-            $pdf = Pdf::loadView('receipts.donation', compact('receipt'));
-            
+            $pdf = Pdf::loadView('receipts.donation', ['receipt' => $receipt]);
+
             // Return PDF as file download
             return response($pdf->output())
                 ->header('Content-Type', 'application/pdf')
                 ->header('Content-Disposition', 'attachment; filename="receipt-' . $donation->id . '.pdf"');
-                
         } catch (\Exception $e) {
             \Log::error('Failed to generate PDF receipt: ' . $e->getMessage());
             return response()->json([

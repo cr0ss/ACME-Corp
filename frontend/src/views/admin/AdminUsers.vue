@@ -439,7 +439,14 @@ const authStore = useAuthStore()
 
 // State
 const users = ref<User[]>([])
-  const statistics = ref<Record<string, unknown>>({})
+  const statistics = ref<{
+  overview?: {
+    total_users: number
+    admin_users: number
+    active_users: number
+    new_users_this_month: number
+  }
+}>({})
 const departments = ref<Array<{ department: string; count: number }>>([])
 const roles = ref<Array<{ role: string; count: number }>>([])
 const isLoading = ref(false)
@@ -739,7 +746,7 @@ function applyFilters() {
 }
 
 // Debounced search
-let searchTimeout: NodeJS.Timeout
+let searchTimeout: ReturnType<typeof setTimeout>
 function debouncedSearch() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {

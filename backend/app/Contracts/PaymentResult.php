@@ -4,6 +4,9 @@ namespace App\Contracts;
 
 class PaymentResult
 {
+    /**
+     * @param array<string, mixed> $responseData
+     */
     public function __construct(
         public readonly bool $success,
         public readonly string $transactionId,
@@ -32,6 +35,9 @@ class PaymentResult
         return $this->errorMessage;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getResponseData(): array
     {
         return $this->responseData;

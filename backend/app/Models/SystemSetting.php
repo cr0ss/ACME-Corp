@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SystemSetting extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     protected $fillable = [
@@ -30,7 +31,7 @@ class SystemSetting extends Model
         return match ($setting->type) {
             'integer' => (int) $setting->value,
             'boolean' => (bool) $setting->value,
-            'json' => json_decode($setting->value, true),
+            'json' => json_decode((string) $setting->value, true),
             default => $setting->value,
         };
     }

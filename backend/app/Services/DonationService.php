@@ -12,15 +12,18 @@ use Illuminate\Support\Facades\DB;
 class DonationService
 {
     public function __construct(
-        private PaymentService $paymentService,
-        private NotificationService $notificationService
+        private readonly PaymentService $paymentService,
+        private readonly NotificationService $notificationService
     ) {}
 
     /**
      * Create and process a donation.
+     *
+     * @param array<string, mixed> $data
      */
-    public function createDonation(array $data, User $donor): Donation
+    public function createDonation(array $data, User $donor): Donation|null
     {
+        /** @var \App\Models\Campaign $campaign */
         $campaign = Campaign::findOrFail($data['campaign_id']);
 
         // Validate campaign status
@@ -46,8 +49,8 @@ class DonationService
                 $donation->id,
                 null,
                 $donation->toArray(),
-                request()?->ip(),
-                request()?->userAgent()
+                request()->ip(),
+                request()->userAgent()
             );
 
             // Process payment
@@ -77,8 +80,8 @@ class DonationService
                     $donation->id,
                     null,
                     ['error' => $e->getMessage()],
-                    request()?->ip(),
-                    request()?->userAgent()
+                    request()->ip(),
+                    request()->userAgent()
                 );
 
                 throw $e;
@@ -97,11 +100,11 @@ class DonationService
 
         // Check refund eligibility
         $refundTimeLimit = config('payment.refund.time_limit_days', 30);
-        if ($donation->created_at->addDays($refundTimeLimit)->isPast()) {
+        if ($donation->created_at?->addDays($refundTimeLimit)->isPast() ?? false) {
             throw new \Exception("Refund period of {$refundTimeLimit} days has expired");
         }
 
-        return DB::transaction(function () use ($donation, $user, $reason) {
+        return DB::transaction(function () use ($donation, $user, $reason): bool {
             $paymentResult = $this->paymentService->refundPayment($donation);
 
             if ($paymentResult->isSuccess()) {
@@ -113,8 +116,8 @@ class DonationService
                     $donation->id,
                     ['status' => 'completed'],
                     ['status' => 'refunded', 'reason' => $reason],
-                    request()?->ip(),
-                    request()?->userAgent()
+                    request()->ip(),
+                    request()->userAgent()
                 );
 
                 // Send refund notification
@@ -129,6 +132,8 @@ class DonationService
 
     /**
      * Get donation receipt data.
+     *
+     * @return array<string, mixed>
      */
     public function getDonationReceipt(Donation $donation): array
     {
@@ -139,13 +144,13 @@ class DonationService
         $donation->load(['campaign', 'campaign.category', 'user', 'paymentTransaction']);
 
         return [
-            'receipt_id' => 'RCP_' . $donation->id . '_' . $donation->created_at->format('Ymd'),
+            'receipt_id' => 'RCP_' . $donation->id . '_' . ($donation->created_at?->format('Ymd') ?? 'Unknown'),
             'donation' => [
                 'id' => $donation->id,
                 'amount' => $donation->amount,
                 'currency' => 'USD',
-                'date' => $donation->created_at->toDateString(),
-                'time' => $donation->created_at->toTimeString(),
+                'date' => $donation->created_at?->toDateString() ?? 'Unknown',
+                'time' => $donation->created_at?->toTimeString() ?? 'Unknown',
                 'payment_method' => $donation->payment_method,
                 'transaction_id' => $donation->transaction_id,
                 'message' => $donation->message,
@@ -169,7 +174,7 @@ class DonationService
             ],
             'tax_info' => [
                 'deductible' => true,
-                'tax_year' => $donation->created_at->year,
+                'tax_year' => $donation->created_at ? $donation->created_at->year : (int) date('Y'),
                 'irs_section' => '501(c)(3)',
             ],
             'issued_at' => now()->toISOString(),
@@ -178,6 +183,8 @@ class DonationService
 
     /**
      * Get donation statistics for a user.
+     *
+     * @return array<string, mixed>
      */
     public function getUserDonationStats(User $user): array
     {
@@ -197,6 +204,8 @@ class DonationService
 
     /**
      * Get donation statistics for a campaign.
+     *
+     * @return array<string, mixed>
      */
     public function getCampaignDonationStats(Campaign $campaign): array
     {
@@ -215,6 +224,8 @@ class DonationService
 
     /**
      * Get recent donations for a campaign.
+     *
+     * @return \Illuminate\Support\Collection<int, array{id: int, amount: float, donor_name: string, message: string|null, created_at: \Illuminate\Support\Carbon|null}>
      */
     public function getRecentDonations(Campaign $campaign, int $limit = 10): \Illuminate\Support\Collection
     {
@@ -226,7 +237,7 @@ class DonationService
             ->limit($limit)
             ->get();
             
-        return $donationsCollection->map(function (\App\Models\Donation $donation) {
+        return $donationsCollection->map(function (\App\Models\Donation $donation): array {
                 return [
                     'id' => $donation->id,
                     'amount' => $donation->amount,
@@ -254,7 +265,7 @@ class DonationService
 
         // Check time limit
         $refundTimeLimit = config('payment.refund.time_limit_days', 30);
-        return $donation->created_at->addDays($refundTimeLimit)->isFuture();
+        return $donation->created_at?->addDays($refundTimeLimit)->isFuture() ?? false;
     }
 
     /**

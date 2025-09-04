@@ -12,6 +12,8 @@ class ReportService
 {
     /**
      * Generate donation summary report.
+     *
+     * @return array<string, mixed>
      */
     public function getDonationSummary(?string $startDate = null, ?string $endDate = null): array
     {
@@ -33,8 +35,8 @@ class ReportService
             ],
             'summary' => [
                 'total_donations' => $totalDonations,
-                'total_amount' => round($totalAmount, 2),
-                'average_donation' => round($avgDonation, 2),
+                'total_amount' => round((float) $totalAmount, 2),
+                'average_donation' => round((float) $avgDonation, 2),
                 'unique_donors' => $uniqueDonors,
                 'donations_per_donor' => $uniqueDonors > 0 ? round($totalDonations / $uniqueDonors, 2) : 0,
             ],
@@ -44,6 +46,8 @@ class ReportService
 
     /**
      * Generate campaign performance report.
+     *
+     * @return array<string, mixed>
      */
     public function getCampaignPerformance(?string $startDate = null, ?string $endDate = null): array
     {
@@ -67,7 +71,7 @@ class ReportService
                 'active_campaigns' => $activeCampaigns,
                 'completed_campaigns' => $completedCampaigns,
                 'cancelled_campaigns' => $cancelledCampaigns,
-                'success_rate' => $totalCampaigns > 0 ? round(($completedCampaigns / $totalCampaigns) * 100, 2) : 0,
+                'success_rate' => $totalCampaigns > 0 ? round((float) (($completedCampaigns / $totalCampaigns) * 100), 2) : 0,
             ],
             'top_campaigns' => $this->getTopCampaigns($startDate, $endDate),
             'category_breakdown' => $this->getCategoryBreakdown($startDate, $endDate),
@@ -76,6 +80,8 @@ class ReportService
 
     /**
      * Generate user engagement report.
+     *
+     * @return array<string, mixed>
      */
     public function getUserEngagement(?string $startDate = null, ?string $endDate = null): array
     {
@@ -101,7 +107,7 @@ class ReportService
                 'total_users' => $totalUsers,
                 'active_donors' => $donorsInPeriod,
                 'campaign_creators' => $campaignCreators,
-                'donor_participation_rate' => $totalUsers > 0 ? round(($donorsInPeriod / $totalUsers) * 100, 2) : 0,
+                'donor_participation_rate' => $totalUsers > 0 ? round((float) (($donorsInPeriod / $totalUsers) * 100), 2) : 0,
             ],
             'department_breakdown' => $this->getDepartmentBreakdown($startDate, $endDate),
             'top_donors' => $this->getTopDonors($startDate, $endDate),
@@ -110,6 +116,8 @@ class ReportService
 
     /**
      * Generate financial report.
+     *
+     * @return array<string, mixed>
      */
     public function getFinancialReport(?string $startDate = null, ?string $endDate = null): array
     {
@@ -130,10 +138,10 @@ class ReportService
                 'end_date' => $endDate->toDateString(),
             ],
             'financial_summary' => [
-                'gross_amount' => round($grossAmount, 2),
-                'refunded_amount' => round($refundedAmount, 2),
-                'net_amount' => round($netAmount, 2),
-                'refund_rate' => $grossAmount > 0 ? round(($refundedAmount / $grossAmount) * 100, 2) : 0,
+                'gross_amount' => round((float) $grossAmount, 2),
+                'refunded_amount' => round((float) $refundedAmount, 2),
+                'net_amount' => round((float) $netAmount, 2),
+                'refund_rate' => $grossAmount > 0 ? round((float) (($refundedAmount / $grossAmount) * 100), 2) : 0,
             ],
             'payment_methods' => $this->getPaymentMethodBreakdown($startDate, $endDate),
             'daily_revenue' => $this->getDailyRevenue($startDate, $endDate),
@@ -142,6 +150,11 @@ class ReportService
 
     /**
      * Export donations data for external reporting.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    /**
+     * @return \Illuminate\Support\Collection<int, array{donation_id: int, donation_date: string, amount: float, status: string, payment_method: string, anonymous: bool, donor_name: string, donor_email: string|null, donor_department: string|null, campaign_title: string, campaign_category: string, campaign_owner: string}>
      */
     public function exportDonations(?string $startDate = null, ?string $endDate = null): Collection
     {
@@ -151,10 +164,10 @@ class ReportService
         return Donation::with(['user', 'campaign', 'campaign.category'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get()
-            ->map(function ($donation) {
+            ->map(function ($donation): array {
                 return [
                     'donation_id' => $donation->id,
-                    'donation_date' => $donation->created_at->toDateString(),
+                    'donation_date' => $donation->created_at?->toDateString() ?? 'Unknown',
                     'amount' => $donation->amount,
                     'status' => $donation->status,
                     'payment_method' => $donation->payment_method,
@@ -171,6 +184,8 @@ class ReportService
 
     /**
      * Get donation trends over time.
+     *
+     * @return array<int, array<string, mixed>>
      */
     private function getDonationTrends(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): array
     {
@@ -186,7 +201,7 @@ class ReportService
             ->orderBy('date')
             ->get();
 
-        return $donations->map(function ($item) {
+        return $donations->map(function ($item): array {
             return [
                 'date' => $item->date,
                 'donations_count' => (int) $item->count,
@@ -197,22 +212,24 @@ class ReportService
 
     /**
      * Get top performing campaigns.
+     *
+     * @return \Illuminate\Support\Collection<int, array{id: int, title: string, category: string, owner: string, total_raised: float, donation_count: int, progress_percentage: float}>
      */
     private function getTopCampaigns(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate, int $limit = 10): Collection
     {
         return Campaign::with(['category', 'user'])
-            ->withSum(['donations' => function ($query) use ($startDate, $endDate) {
+            ->withSum(['donations' => function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
                       ->whereBetween('created_at', [$startDate, $endDate]);
             }], 'amount')
-            ->withCount(['donations' => function ($query) use ($startDate, $endDate) {
+            ->withCount(['donations' => function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
                       ->whereBetween('created_at', [$startDate, $endDate]);
             }])
             ->orderBy('donations_sum_amount', 'desc')
             ->limit($limit)
             ->get()
-            ->map(function ($campaign) {
+            ->map(function ($campaign): array {
                 return [
                     'id' => $campaign->id,
                     'title' => $campaign->title,
@@ -227,6 +244,8 @@ class ReportService
 
     /**
      * Get donation breakdown by category.
+     *
+     * @return \Illuminate\Support\Collection<int, array{category: string, donation_count: int, total_amount: float}>
      */
     private function getCategoryBreakdown(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): Collection
     {
@@ -243,9 +262,9 @@ class ReportService
             ->groupBy('campaign_categories.id', 'campaign_categories.name')
             ->orderBy('total_amount', 'desc')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item): array {
                 return [
-                    'category' => $item->category,
+                    'category' => (string) $item->category,
                     'donation_count' => (int) $item->donation_count,
                     'total_amount' => round((float) $item->total_amount, 2),
                 ];
@@ -254,6 +273,8 @@ class ReportService
 
     /**
      * Get donation breakdown by department.
+     *
+     * @return \Illuminate\Support\Collection<int, array{department: string, donation_count: int, total_amount: float, unique_donors: int}>
      */
     private function getDepartmentBreakdown(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): Collection
     {
@@ -270,9 +291,9 @@ class ReportService
             ->groupBy('users.department')
             ->orderBy('total_amount', 'desc')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item): array {
                 return [
-                    'department' => $item->department,
+                    'department' => (string) $item->department,
                     'donation_count' => (int) $item->donation_count,
                     'total_amount' => round((float) $item->total_amount, 2),
                     'unique_donors' => (int) $item->unique_donors,
@@ -282,6 +303,8 @@ class ReportService
 
     /**
      * Get top donors.
+     *
+     * @return \Illuminate\Support\Collection<int, array{name: string, department: string, donation_count: int, total_amount: float}>
      */
     private function getTopDonors(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate, int $limit = 10): Collection
     {
@@ -300,10 +323,10 @@ class ReportService
             ->orderBy('total_amount', 'desc')
             ->limit($limit)
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item): array {
                 return [
-                    'name' => $item->name,
-                    'department' => $item->department,
+                    'name' => (string) $item->name,
+                    'department' => (string) $item->department,
                     'donation_count' => (int) $item->donation_count,
                     'total_amount' => round((float) $item->total_amount, 2),
                 ];
@@ -312,6 +335,8 @@ class ReportService
 
     /**
      * Get payment method breakdown.
+     *
+     * @return \Illuminate\Support\Collection<int, array{payment_method: string, count: int, total_amount: float}>
      */
     private function getPaymentMethodBreakdown(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): Collection
     {
@@ -326,9 +351,9 @@ class ReportService
             ->groupBy('payment_method')
             ->orderBy('total_amount', 'desc')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item): array {
                 return [
-                    'payment_method' => $item->payment_method,
+                    'payment_method' => (string) $item->payment_method,
                     'count' => (int) $item->count,
                     'total_amount' => round((float) $item->total_amount, 2),
                 ];
@@ -337,6 +362,8 @@ class ReportService
 
     /**
      * Get daily revenue data.
+     *
+     * @return array<int, array{date: string, revenue: float}>
      */
     private function getDailyRevenue(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): array
     {
@@ -351,7 +378,7 @@ class ReportService
             ->orderBy('date')
             ->get();
 
-        return $revenue->map(function ($item) {
+        return $revenue->map(function ($item): array {
             return [
                 'date' => $item->date,
                 'revenue' => round((float) $item->revenue, 2),

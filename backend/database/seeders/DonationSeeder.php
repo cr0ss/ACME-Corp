@@ -47,7 +47,7 @@ class DonationSeeder extends Seeder
                     'status' => 'completed',
                     'anonymous' => rand(1, 10) <= 2, // 20% chance of anonymous
                     'message' => rand(1, 10) <= 3 ? $this->getRandomMessage() : null, // 30% chance of message
-                    'created_at' => $campaign->created_at->addDays(rand(0, 60)),
+                    'created_at' => $campaign->created_at?->addDays(rand(0, 60)) ?? now(),
                 ]);
 
                 // Create corresponding payment transaction
@@ -60,7 +60,7 @@ class DonationSeeder extends Seeder
                     'status' => 'completed',
                     'response_data' => [
                         'payment_method' => $donation->payment_method,
-                        'processed_at' => $donation->created_at->toISOString(),
+                        'processed_at' => $donation->created_at?->toISOString() ?? now()->toISOString(),
                         'confirmation_code' => 'CONF_' . Str::upper(Str::random(8)),
                     ],
                 ]);

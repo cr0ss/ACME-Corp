@@ -77,7 +77,7 @@ class NotificationService
     {
         try {
             $donation->load(['user', 'campaign']);
-            
+
             Log::info('Refund notification sent', [
                 'donation_id' => $donation->id,
                 'donor_email' => $donation->user->email,
@@ -103,7 +103,7 @@ class NotificationService
     {
         try {
             $campaign->load(['user']);
-            
+
             Log::info('Campaign approval notification sent', [
                 'campaign_id' => $campaign->id,
                 'owner_email' => $campaign->user->email,
@@ -128,7 +128,7 @@ class NotificationService
     {
         try {
             $campaign->load(['user']);
-            
+
             Log::info('Campaign rejection notification sent', [
                 'campaign_id' => $campaign->id,
                 'owner_email' => $campaign->user->email,
@@ -154,7 +154,7 @@ class NotificationService
     {
         try {
             $campaign->load(['user']);
-            
+
             Log::info('Campaign milestone notification sent', [
                 'campaign_id' => $campaign->id,
                 'owner_email' => $campaign->user->email,
@@ -181,7 +181,7 @@ class NotificationService
     {
         try {
             $campaign->load(['user']);
-            
+
             Log::info('Campaign ending soon notification sent', [
                 'campaign_id' => $campaign->id,
                 'owner_email' => $campaign->user->email,
@@ -230,7 +230,7 @@ class NotificationService
                 ->where('status', 'active')
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
-                ->withCount(['donations' => function ($query) {
+                ->withCount(['donations' => function ($query): void {
                     $query->where('status', 'completed')
                           ->where('created_at', '>=', now()->subDays(7));
                 }])
@@ -257,12 +257,14 @@ class NotificationService
 
     /**
      * Send admin notification about suspicious activity.
+     *
+     * @param array<string, mixed> $details
      */
     public function sendSuspiciousActivityNotification(string $activity, array $details): void
     {
         try {
             $admins = User::where('is_admin', true)->get();
-            
+
             foreach ($admins as $admin) {
                 Log::warning('Suspicious activity notification sent to admin', [
                     'admin_id' => $admin->id,

@@ -14,10 +14,10 @@ class AdminUserController extends Controller
     /**
      * Display a listing of users with advanced filtering.
      */
-    public function index(Request $request)
+    public function index(Request $request): \Illuminate\Http\JsonResponse
     {
         // Validate pagination and filtering parameters
-        $validated = $request->validate([
+        $request->validate([
             'page' => 'integer|min:1',
             'per_page' => 'integer|min:1|max:100',
             'search' => 'string|max:255',
@@ -36,7 +36,7 @@ class AdminUserController extends Controller
         // Search functionality
         if ($request->has('search')) {
             $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('employee_id', 'like', "%{$search}%")
@@ -87,14 +87,14 @@ class AdminUserController extends Controller
 
         // Include related data
         $query->withCount(['donations', 'campaigns']);
-        $query->with(['donations' => function ($q) {
+        $query->with(['donations' => function ($q): void {
             $q->where('status', 'completed')->select('user_id', 'amount');
         }]);
 
         $users = $query->paginate($request->get('per_page', 15));
 
         // Add computed fields
-        $users->getCollection()->transform(function (\App\Models\User $user) {
+        $users->getCollection()->transform(function (\App\Models\User $user): \App\Models\User {
             // Add dynamic properties that PHPStan can understand
             $user->setAttribute('total_donated', $user->donations->sum('amount'));
             $user->setAttribute('donation_count', $user->donations_count ?? 0);
@@ -109,7 +109,7 @@ class AdminUserController extends Controller
     /**
      * Store a newly created user.
      */
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -133,16 +133,19 @@ class AdminUserController extends Controller
         ]);
 
         // Log the user creation
-        AuditLog::createLog(
-            $request->user()->id,
-            'user_created',
-            'App\Models\User',
-            $user->id,
-            null,
-            $user->toArray(),
-            $request->ip(),
-            $request->userAgent()
-        );
+        $adminUser = $request->user();
+        if ($adminUser) {
+            AuditLog::createLog(
+                $adminUser->id,
+                'user_created',
+                'App\Models\User',
+                $user->id,
+                null,
+                $user->toArray(),
+                $request->ip(),
+                $request->userAgent()
+            );
+        }
 
         return response()->json($user, 201);
     }
@@ -150,15 +153,15 @@ class AdminUserController extends Controller
     /**
      * Display the specified user.
      */
-    public function show(User $user)
+    public function show(User $user): \Illuminate\Http\JsonResponse
     {
         $user->load([
-            'donations' => function ($query) {
+            'donations' => function ($query): void {
                 $query->with(['campaign:id,title'])
                     ->orderBy('created_at', 'desc')
                     ->limit(10);
             },
-            'campaigns' => function ($query) {
+            'campaigns' => function ($query): void {
                 $query->with(['category:id,name'])
                     ->orderBy('created_at', 'desc')
                     ->limit(5);
@@ -177,7 +180,7 @@ class AdminUserController extends Controller
     /**
      * Update the specified user.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -215,16 +218,19 @@ class AdminUserController extends Controller
         $user->update($updateData);
 
         // Log the user update
-        AuditLog::createLog(
-            $request->user()->id,
-            'user_updated',
-            'App\Models\User',
-            $user->id,
-            $oldValues,
-            $user->toArray(),
-            $request->ip(),
-            $request->userAgent()
-        );
+        $adminUser = $request->user();
+        if ($adminUser) {
+            AuditLog::createLog(
+                $adminUser->id,
+                'user_updated',
+                'App\Models\User',
+                $user->id,
+                $oldValues,
+                $user->toArray(),
+                $request->ip(),
+                $request->userAgent()
+            );
+        }
 
         return response()->json($user);
     }
@@ -232,7 +238,7 @@ class AdminUserController extends Controller
     /**
      * Remove the specified user from storage.
      */
-    public function destroy(Request $request, User $user)
+    public function destroy(Request $request, User $user): \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
     {
         // Prevent deletion of the last admin
         if ($user->is_admin && User::where('is_admin', true)->count() <= 1) {
@@ -242,23 +248,27 @@ class AdminUserController extends Controller
         }
 
         // Prevent self-deletion
-        if ($user->id === $request->user()->id) {
+        $adminUser = $request->user();
+        if ($adminUser && $user->id === $adminUser->id) {
             return response()->json([
                 'message' => 'Cannot delete your own account'
             ], 422);
         }
 
         // Log the user deletion before deleting
-        AuditLog::createLog(
-            $request->user()->id,
-            'user_deleted',
-            'App\Models\User',
-            $user->id,
-            $user->toArray(),
-            null,
-            $request->ip(),
-            $request->userAgent()
-        );
+        $adminUser = $request->user();
+        if ($adminUser) {
+            AuditLog::createLog(
+                $adminUser->id,
+                'user_deleted',
+                'App\Models\User',
+                $user->id,
+                $user->toArray(),
+                null,
+                $request->ip(),
+                $request->userAgent()
+            );
+        }
 
         $user->delete();
 
@@ -268,13 +278,13 @@ class AdminUserController extends Controller
     /**
      * Get user statistics and analytics.
      */
-    public function statistics()
+    public function statistics(): \Illuminate\Http\JsonResponse
     {
         $stats = [
             'overview' => [
                 'total_users' => User::count(),
                 'admin_users' => User::where('is_admin', true)->count(),
-                'active_users' => User::whereHas('donations', function ($query) {
+                'active_users' => User::whereHas('donations', function ($query): void {
                     $query->where('created_at', '>=', now()->subDays(30));
                 })->count(),
                 'new_users_this_month' => User::where('created_at', '>=', now()->startOfMonth())->count(),
@@ -300,7 +310,7 @@ class AdminUserController extends Controller
     /**
      * Bulk update users.
      */
-    public function bulkUpdate(Request $request)
+    public function bulkUpdate(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'user_ids' => 'required|array',
@@ -342,16 +352,19 @@ class AdminUserController extends Controller
                 $updated[] = $user->id;
 
                 // Log the bulk update
-                AuditLog::createLog(
-                    $request->user()->id,
-                    "bulk_update_{$action}",
-                    'App\Models\User',
-                    $user->id,
-                    $oldValues,
-                    $user->toArray(),
-                    $request->ip(),
-                    $request->userAgent()
-                );
+                $adminUser = $request->user();
+                if ($adminUser) {
+                    AuditLog::createLog(
+                        $adminUser->id,
+                        "bulk_update_{$action}",
+                        'App\Models\User',
+                        $user->id,
+                        $oldValues,
+                        $user->toArray(),
+                        $request->ip(),
+                        $request->userAgent()
+                    );
+                }
             }
         }
 
@@ -365,18 +378,18 @@ class AdminUserController extends Controller
     /**
      * Export users data.
      */
-    public function export(Request $request)
+    public function export(Request $request): \Illuminate\Http\JsonResponse
     {
         $format = $request->get('format', 'csv'); // csv, json, xlsx
         
-        $query = User::with(['donations' => function ($q) {
+        $query = User::with(['donations' => function ($q): void {
             $q->where('status', 'completed');
         }]);
 
         // Apply same filters as index method
         if ($request->has('search')) {
             $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('employee_id', 'like', "%{$search}%");
@@ -387,7 +400,7 @@ class AdminUserController extends Controller
             $query->where('department', $request->department);
         }
 
-        $users = $query->get()->map(function ($user) {
+        $users = $query->get()->map(function ($user): array {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -398,21 +411,24 @@ class AdminUserController extends Controller
                 'is_admin' => $user->is_admin ? 'Yes' : 'No',
                 'total_donated' => $user->donations->sum('amount'),
                 'donations_count' => $user->donations->count(),
-                'created_at' => $user->created_at->format('Y-m-d H:i:s'),
+                'created_at' => $user->created_at?->format('Y-m-d H:i:s') ?? 'Unknown',
             ];
         });
 
         // Log the export
-        AuditLog::createLog(
-            $request->user()->id,
-            'users_exported',
-            null,
-            null,
-            null,
-            ['format' => $format, 'count' => $users->count()],
-            $request->ip(),
-            $request->userAgent()
-        );
+        $adminUser = $request->user();
+        if ($adminUser) {
+            AuditLog::createLog(
+                $adminUser->id,
+                'users_exported',
+                null,
+                null,
+                null,
+                ['format' => $format, 'count' => $users->count()],
+                $request->ip(),
+                $request->userAgent()
+            );
+        }
 
         return response()->json([
             'data' => $users,

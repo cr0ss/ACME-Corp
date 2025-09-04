@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Campaign extends Model
 {
+    /** @use HasFactory<\Database\Factories\CampaignFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -59,6 +60,8 @@ class Campaign extends Model
 
     /**
      * Get the user who created this campaign.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
      */
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -67,6 +70,8 @@ class Campaign extends Model
 
     /**
      * Get the category this campaign belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<CampaignCategory, $this>
      */
     public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -75,6 +80,8 @@ class Campaign extends Model
 
     /**
      * Get donations for this campaign.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Donation, $this>
      */
     public function donations(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
