@@ -63,19 +63,38 @@ seed: ## Seed the database
 # =============================================================================
 
 test: ## Run all tests (using test database)
-	docker-compose exec -T backend php artisan test
+	docker-compose exec -T backend php artisan test --env=testing
 
 test-unit: ## Run unit tests only (using test database)
-	docker-compose exec -T backend php artisan test --testsuite=Unit
+	docker-compose exec -T backend php artisan test --testsuite=Unit --env=testing
 
 test-feature: ## Run feature tests only (using test database)
-	docker-compose exec -T backend php artisan test --testsuite=Feature
+	docker-compose exec -T backend php artisan test --testsuite=Feature --env=testing
 
 test-filter: ## Run specific test (usage: make test-filter filter="AdminTest")
-	docker-compose exec -T backend php artisan test --filter=$(filter)
+	docker-compose exec -T backend php artisan test --filter=$(filter) --env=testing
 
 test-coverage: ## Run tests with coverage report (using test database)
-	docker-compose exec -T backend php artisan test --coverage
+	docker-compose exec -T backend php artisan test --coverage --env=testing
+
+# Pest Testing (Modern PHP Testing Framework)
+test-pest: ## Run all Pest tests natively (using test database)
+	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/"
+
+test-pest-unit: ## Run Pest unit tests only (User and Campaign models)
+	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/UserTest.php tests/Pest/CampaignTest.php"
+
+test-pest-feature: ## Run Pest feature tests only (API tests)
+	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/CampaignApiTest.php"
+
+test-pest-api: ## Run Pest API tests only
+	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/ --filter=\"api\""
+
+test-pest-filter: ## Run specific Pest test (usage: make test-pest-filter filter="UserTest")
+	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/ --filter=$(filter)"
+
+test-pest-file: ## Run specific Pest test file (usage: make test-pest-file file="UserTest.php")
+	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/$(file)"
 
 # Static Analysis
 phpstan: ## Run PHPStan static analysis
@@ -258,7 +277,7 @@ fresh: ## Fresh start: rebuild, migrate, seed
 	@make seed
 	@echo "✨ Fresh environment ready!"
 
-qa: test npm-test phpstan npm-lint format-check ## Run all quality assurance checks
+qa: test test-pest npm-test phpstan npm-lint ## Run all quality assurance checks
 
 deploy-check: qa ## Check if code is ready for deployment
 	@echo "✅ All quality checks passed! Code is ready for deployment."

@@ -14,8 +14,8 @@ class MockPaymentProvider implements PaymentProviderInterface
         // Simulate processing time
         usleep(100000); // 0.1 seconds
 
-        // In testing environment, always succeed; otherwise simulate 90% success rate for demo
-        $success = app()->environment('testing') ? true : (rand(1, 100) <= 90);
+        // Determine success based on environment and testing context
+        $success = $this->shouldSucceed();
         
         $transactionId = 'MOCK_' . Str::upper(Str::random(12));
         
@@ -46,6 +46,27 @@ class MockPaymentProvider implements PaymentProviderInterface
                 'failed_at' => now()->toISOString(),
             ]
         );
+    }
+
+    /**
+     * Determine if the payment should succeed based on environment
+     */
+    private function shouldSucceed(): bool
+    {
+        // Check multiple ways to detect testing environment
+        $isTesting = app()->environment('testing') ||
+                    app()->environment('test') ||
+                    app()->runningUnitTests() ||
+                    defined('PHPUNIT_COMPOSER_INSTALL') ||
+                    class_exists('Tests\TestCase');
+
+        // In testing environment, always succeed for reliability
+        if ($isTesting) {
+            return true;
+        }
+
+        // In non-testing environment, simulate 90% success rate for demo
+        return rand(1, 100) <= 90;
     }
 
     public function refundPayment(Donation $donation): PaymentResult
