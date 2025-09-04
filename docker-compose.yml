@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Laravel Backend API
@@ -12,7 +12,6 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
-      - ./.env:/var/www/html/.env
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     entrypoint: ["/bin/sh", "-c", "php-fpm"]
     environment:
@@ -118,8 +117,8 @@ services:
     container_name: acme_mailhog
     restart: unless-stopped
     ports:
-      - "1026:1025"  # SMTP (changed from 1025 to 1026)
-      - "8026:8025"  # Web UI (changed from 8025 to 8026)
+      - "1026:1025" # SMTP
+      - "8026:8025" # Web UI
     networks:
       - acme_network
 
@@ -134,7 +133,6 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
-      - ./.env:/var/www/html/.env
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     environment:
       - APP_ENV=local
@@ -167,7 +165,6 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
-      - ./.env:/var/www/html/.env
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     environment:
       - APP_ENV=local
