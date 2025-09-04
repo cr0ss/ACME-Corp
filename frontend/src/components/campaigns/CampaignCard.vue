@@ -63,7 +63,7 @@
         </router-link>
         <button
           v-if="campaign.status === 'active' && authStore.isAuthenticated"
-          @click="showDonateModal = true"
+          @click="handleDonateClick"
           class="btn-outline px-3"
         >
           Donate
@@ -71,21 +71,13 @@
       </div>
     </div>
 
-    <!-- Donation Modal -->
-    <DonationModal
-      v-if="showDonateModal"
-      :campaign="campaign"
-      @close="showDonateModal = false"
-      @success="handleDonationSuccess"
-    />
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { Campaign } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
-import DonationModal from '@/components/donations/DonationModal.vue'
 
 interface Props {
   campaign: Campaign
@@ -94,12 +86,10 @@ interface Props {
 const props = defineProps<Props>()
 
 const authStore = useAuthStore()
-const showDonateModal = ref(false)
 
-// Handle successful donation
-const handleDonationSuccess = () => {
-  showDonateModal.value = false
-  // Emit the donate event to parent component for any additional handling
+// Handle donate button click
+const handleDonateClick = () => {
+  // Emit the donate event to parent component to open the modal
   emit('donate', props.campaign)
 }
 

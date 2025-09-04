@@ -3,7 +3,7 @@
     <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-xl font-bold text-gray-900">Support {{ campaign?.title }}</h3>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">
+        <button @click="handleClose" class="text-gray-400 hover:text-gray-600">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
@@ -137,7 +137,7 @@
         <div class="flex space-x-3 pt-4">
           <button
             type="button"
-            @click="$emit('close')"
+            @click="handleClose"
             class="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Cancel
@@ -239,6 +239,10 @@ const isFormValid = computed(() => {
 })
 
 // Methods
+const handleClose = () => {
+  emit('close')
+}
+
 const submitDonation = async () => {
   if (!isFormValid.value) return
 

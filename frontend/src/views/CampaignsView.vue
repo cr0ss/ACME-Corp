@@ -396,12 +396,17 @@ function handleDonate(campaign: Campaign) {
 }
 
 function handleDonationSuccess() {
+  // Close the modal
+  showDonateModal.value = false
   // Reload campaigns to reflect updated progress
   fetchCampaigns(1)
 }
 
 // Watchers - debounced for better performance
 let searchTimeout: ReturnType<typeof setTimeout>
+
+
+
 watch(
   () => filters.value.search,
   () => {

@@ -183,7 +183,10 @@ class DonationController extends Controller
                 $request->userAgent()
             );
 
-            return response()->json($donation->load(['campaign', 'paymentTransaction']), 201);
+            return response()->json([
+                'message' => 'Donation created successfully',
+                'donation' => $donation->load(['campaign', 'paymentTransaction']),
+            ], 201);
 
         } catch (\Exception $e) {
             DB::rollback();

@@ -39,25 +39,29 @@ class DonationTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonStructure([
-                'id',
-                'amount',
-                'campaign_id',
-                'user_id',
-                'payment_method',
-                'status',
-                'anonymous',
                 'message',
-                'created_at',
-                'updated_at',
-            ])
-            ->assertJsonFragment([
-                'amount' => '100.50',
-                'campaign_id' => $campaign->id,
-                'user_id' => $user->id,
-                'payment_method' => 'mock',
-                'anonymous' => false,
-                'message' => 'Supporting this great cause!',
+                'donation' => [
+                    'id',
+                    'amount',
+                    'campaign_id',
+                    'user_id',
+                    'payment_method',
+                    'status',
+                    'anonymous',
+                    'message',
+                    'created_at',
+                    'updated_at',
+                ],
             ]);
+
+        $responseData = $response->json();
+        $this->assertEquals('Donation created successfully', $responseData['message']);
+        $this->assertEquals('100.50', $responseData['donation']['amount']);
+        $this->assertEquals($campaign->id, $responseData['donation']['campaign_id']);
+        $this->assertEquals($user->id, $responseData['donation']['user_id']);
+        $this->assertEquals('mock', $responseData['donation']['payment_method']);
+        $this->assertEquals(false, $responseData['donation']['anonymous']);
+        $this->assertEquals('Supporting this great cause!', $responseData['donation']['message']);
 
         $this->assertDatabaseHas('donations', [
             'campaign_id' => $campaign->id,
@@ -280,10 +284,10 @@ class DonationTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/donations', $donationData);
 
-        $response->assertCreated()
-            ->assertJsonFragment([
-                'anonymous' => true,
-            ]);
+        $response->assertCreated();
+
+        $responseData = $response->json();
+        $this->assertTrue($responseData['donation']['anonymous']);
 
         $this->assertDatabaseHas('donations', [
             'campaign_id' => $campaign->id,
@@ -332,10 +336,10 @@ class DonationTest extends TestCase
             $response = $this->actingAs($user, 'sanctum')
                 ->postJson('/api/donations', $donationData);
 
-            $response->assertCreated()
-                ->assertJsonFragment([
-                    'payment_method' => $method,
-                ]);
+            $response->assertCreated();
+
+            $responseData = $response->json();
+            $this->assertEquals($method, $responseData['donation']['payment_method']);
         }
     }
 
