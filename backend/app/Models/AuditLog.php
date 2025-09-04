@@ -18,10 +18,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $ip_address
  * @property string|null $user_agent
  * @property \Illuminate\Support\Carbon $created_at
- * 
  * @property-read \App\Models\User|null $user
  * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $auditable
- * 
  * @property int|null $action_count Dynamic property for aggregated action count
  * @property int|null $ip_count Dynamic property for IP count
  * @property int|null $failed_count Dynamic property for failed attempt count
@@ -77,8 +75,8 @@ class AuditLog extends Model
     /**
      * Create an audit log entry.
      *
-     * @param array<string, mixed>|null $oldValues
-     * @param array<string, mixed>|null $newValues
+     * @param  array<string, mixed>|null  $oldValues
+     * @param  array<string, mixed>|null  $newValues
      */
     public static function createLog(
         ?int $userId,

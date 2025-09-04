@@ -2,12 +2,12 @@
 
 namespace Tests\Unit\Models;
 
-use Tests\TestCase;
-use App\Models\User;
+use App\Models\AuditLog;
 use App\Models\Campaign;
 use App\Models\Donation;
-use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class UserTest extends TestCase
 {

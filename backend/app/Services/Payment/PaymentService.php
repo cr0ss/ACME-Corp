@@ -13,6 +13,7 @@ class PaymentService
 {
     /** @var array<string, \App\Contracts\PaymentProviderInterface> */
     private array $providers = [];
+
     private ?PaymentProviderInterface $currentProvider = null;
 
     public function __construct()
@@ -33,12 +34,12 @@ class PaymentService
      */
     public function setProvider(string $providerName): self
     {
-        if (!isset($this->providers[$providerName])) {
+        if (! isset($this->providers[$providerName])) {
             throw new InvalidArgumentException("Payment provider '{$providerName}' not found");
         }
 
         $this->currentProvider = $this->providers[$providerName];
-        
+
         return $this;
     }
 
@@ -63,7 +64,7 @@ class PaymentService
     /**
      * Process a payment for a donation.
      *
-     * @param array<string, mixed> $paymentData
+     * @param  array<string, mixed>  $paymentData
      */
     public function processPayment(Donation $donation, array $paymentData, ?string $providerName = null): PaymentResult
     {
@@ -71,22 +72,22 @@ class PaymentService
             $this->setProvider($providerName);
         }
 
-        if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
+        if (! $this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
             throw new InvalidArgumentException('No payment provider set');
         }
 
         // Validate payment data
-        if (!$this->currentProvider->validatePaymentData($paymentData)) {
+        if (! $this->currentProvider->validatePaymentData($paymentData)) {
             return new PaymentResult(
                 success: false,
-                transactionId: 'INVALID_' . time(),
+                transactionId: 'INVALID_'.time(),
                 errorMessage: 'Invalid payment data provided'
             );
         }
 
         return DB::transaction(function () use ($donation, $paymentData): \App\Contracts\PaymentResult {
             // Process payment with the provider
-            if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
+            if (! $this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
                 throw new InvalidArgumentException('No payment provider set');
             }
 
@@ -134,7 +135,7 @@ class PaymentService
         if ($donation->status !== 'completed') {
             return new PaymentResult(
                 success: false,
-                transactionId: 'REFUND_' . time(),
+                transactionId: 'REFUND_'.time(),
                 errorMessage: 'Can only refund completed donations'
             );
         }
@@ -145,12 +146,12 @@ class PaymentService
             $this->setProvider($donation->paymentTransaction->provider);
         }
 
-        if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
+        if (! $this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
             throw new InvalidArgumentException('No payment provider set for refund');
         }
 
         return DB::transaction(function () use ($donation): \App\Contracts\PaymentResult {
-            if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
+            if (! $this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
                 throw new InvalidArgumentException('No payment provider set for refund');
             }
 
@@ -188,13 +189,13 @@ class PaymentService
     /**
      * Handle webhook from payment provider.
      *
-     * @param array<string, mixed> $webhookData
+     * @param  array<string, mixed>  $webhookData
      */
     public function handleWebhook(string $providerName, array $webhookData): ?PaymentResult
     {
         $this->setProvider($providerName);
-        
-        if (!$this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
+
+        if (! $this->currentProvider instanceof \App\Contracts\PaymentProviderInterface) {
             throw new InvalidArgumentException('No payment provider set for webhook');
         }
 
@@ -207,16 +208,16 @@ class PaymentService
     private function registerDefaultProviders(): void
     {
         // Register mock provider (always available for testing)
-        $this->registerProvider('mock', new MockPaymentProvider());
+        $this->registerProvider('mock', new MockPaymentProvider);
 
         // Register Stripe if configured
         if (config('services.stripe.secret')) {
-            $this->registerProvider('stripe', new StripePaymentProvider());
+            $this->registerProvider('stripe', new StripePaymentProvider);
         }
 
         // Register PayPal if configured
         if (config('services.paypal.client_id')) {
-            $this->registerProvider('paypal', new PayPalPaymentProvider());
+            $this->registerProvider('paypal', new PayPalPaymentProvider);
         }
 
         // Set default provider

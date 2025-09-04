@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
 use App\Models\Campaign;
 use App\Models\CampaignCategory;
 use App\Models\Donation;
@@ -147,24 +146,24 @@ class AdminAnalyticsController extends Controller
                     $query->where('status', 'completed')
                         ->where('created_at', '>=', now()->subDays($period));
                 }])
-                ->whereHas('donations', function ($query) use ($period): void {
-                    $query->where('status', 'completed')
-                        ->where('created_at', '>=', now()->subDays($period));
-                })
-                ->get()
-                ->map(function ($user): array {
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'department' => $user->department,
-                        'employee_id' => $user->employee_id,
-                        'total_donated' => $user->donations->sum('amount'),
-                        'donations_count' => $user->donations->count(),
-                    ];
-                })
-                ->sortByDesc('total_donated')
-                ->take(20)
-                ->values(),
+                    ->whereHas('donations', function ($query) use ($period): void {
+                        $query->where('status', 'completed')
+                            ->where('created_at', '>=', now()->subDays($period));
+                    })
+                    ->get()
+                    ->map(function ($user): array {
+                        return [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'department' => $user->department,
+                            'employee_id' => $user->employee_id,
+                            'total_donated' => $user->donations->sum('amount'),
+                            'donations_count' => $user->donations->count(),
+                        ];
+                    })
+                    ->sortByDesc('total_donated')
+                    ->take(20)
+                    ->values(),
             ],
             'growth' => $this->getUserGrowthTrends($period),
         ];
@@ -181,8 +180,9 @@ class AdminAnalyticsController extends Controller
         if ($total === 0) {
             return 0;
         }
-        
+
         $completed = Donation::where('status', 'completed')->count();
+
         return round(($completed / $total) * 100, 2);
     }
 
@@ -194,10 +194,10 @@ class AdminAnalyticsController extends Controller
     private function getMonthlyDonationTrends(): array
     {
         return Donation::select(
-                DB::raw('to_char(created_at, \'YYYY-MM\') as month'),
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(amount) as total')
-            )
+            DB::raw('to_char(created_at, \'YYYY-MM\') as month'),
+            DB::raw('COUNT(*) as count'),
+            DB::raw('SUM(amount) as total')
+        )
             ->where('status', 'completed')
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('month')
@@ -237,13 +237,13 @@ class AdminAnalyticsController extends Controller
     private function getTopDonors(): array
     {
         return User::select(
-                'users.id',
-                'users.name',
-                'users.department',
-                'users.employee_id',
-                DB::raw('SUM(donations.amount) as total_donated'),
-                DB::raw('COUNT(donations.id) as donations_count')
-            )
+            'users.id',
+            'users.name',
+            'users.department',
+            'users.employee_id',
+            DB::raw('SUM(donations.amount) as total_donated'),
+            DB::raw('COUNT(donations.id) as donations_count')
+        )
             ->join('donations', 'users.id', '=', 'donations.user_id')
             ->where('donations.status', 'completed')
             ->where('donations.anonymous', false)
@@ -262,13 +262,13 @@ class AdminAnalyticsController extends Controller
     private function getCampaignPerformance(): array
     {
         return Campaign::select(
-                'id',
-                'title',
-                'target_amount',
-                'current_amount',
-                DB::raw('(current_amount / target_amount * 100) as progress_percentage'),
-                'status'
-            )
+            'id',
+            'title',
+            'target_amount',
+            'current_amount',
+            DB::raw('(current_amount / target_amount * 100) as progress_percentage'),
+            'status'
+        )
             ->where('status', '!=', 'draft')
             ->orderBy('progress_percentage', 'desc')
             ->limit(10)
@@ -291,11 +291,11 @@ class AdminAnalyticsController extends Controller
             COUNT(*) as donation_count,
             SUM(amount) as total_amount
         ')
-        ->where('status', 'completed')
-        ->where('created_at', '>=', $startDate)
-        ->groupBy('date')
-        ->orderBy('date')
-        ->get();
+            ->where('status', 'completed')
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
 
         return $dailyData->map(function ($item): array {
             /** @var \stdClass $item */
@@ -322,11 +322,11 @@ class AdminAnalyticsController extends Controller
             COUNT(*) as count,
             SUM(amount) as total_amount
         ')
-        ->where('status', 'completed')
-        ->where('created_at', '>=', $startDate)
-        ->groupBy('payment_method')
-        ->orderBy('total_amount', 'desc')
-        ->get();
+            ->where('status', 'completed')
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('payment_method')
+            ->orderBy('total_amount', 'desc')
+            ->get();
 
         return $result->map(function ($item): array {
             /** @var \stdClass $item */
@@ -353,12 +353,12 @@ class AdminAnalyticsController extends Controller
             COUNT(donations.id) as donation_count,
             SUM(donations.amount) as total_amount
         ')
-        ->join('donations', 'users.id', '=', 'donations.user_id')
-        ->where('donations.status', 'completed')
-        ->where('donations.created_at', '>=', $startDate)
-        ->groupBy('department')
-        ->orderBy('total_amount', 'desc')
-        ->get();
+            ->join('donations', 'users.id', '=', 'donations.user_id')
+            ->where('donations.status', 'completed')
+            ->where('donations.created_at', '>=', $startDate)
+            ->groupBy('department')
+            ->orderBy('total_amount', 'desc')
+            ->get();
 
         return $result->map(function ($item): array {
             /** @var \stdClass $item */
@@ -384,11 +384,11 @@ class AdminAnalyticsController extends Controller
             COUNT(*) as donation_count,
             SUM(amount) as total_amount
         ')
-        ->where('status', 'completed')
-        ->where('created_at', '>=', $startDate)
-        ->groupBy('hour')
-        ->orderBy('hour')
-        ->get();
+            ->where('status', 'completed')
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('hour')
+            ->orderBy('hour')
+            ->get();
 
         $distribution = array_fill(0, 24, [
             'hour' => 0,
@@ -438,28 +438,28 @@ class AdminAnalyticsController extends Controller
         return CampaignCategory::withCount(['campaigns' => function ($query) use ($startDate): void {
             $query->where('created_at', '>=', $startDate);
         }])
-        ->withSum(['campaigns as total_target' => function ($query) use ($startDate): void {
-            $query->where('created_at', '>=', $startDate);
-        }], 'target_amount')
-        ->withSum(['campaigns as total_raised' => function ($query) use ($startDate): void {
-            $query->join('donations', 'campaigns.id', '=', 'donations.campaign_id')
-                ->where('donations.status', 'completed')
-                ->where('donations.created_at', '>=', $startDate);
-        }], 'donations.amount')
-        ->get()
-        ->map(function ($category): array {
-            /** @var \App\Models\CampaignCategory & object{campaigns_count: int|null, total_target: float|null, total_raised: float|null} $category */
-            return [
-                'id' => $category->id,
-                'name' => $category->name,
-                'campaigns_count' => (int) ($category->campaigns_count ?? 0),
-                'total_target' => round((float) ($category->total_target ?? 0), 2),
-                'total_raised' => round((float) ($category->total_raised ?? 0), 2),
-                'progress_percentage' => ($category->total_target ?? 0) > 0 
-                    ? round(($category->total_raised ?? 0) / ($category->total_target ?? 1) * 100, 2)
-                    : 0,
-            ];
-        })->toArray();
+            ->withSum(['campaigns as total_target' => function ($query) use ($startDate): void {
+                $query->where('created_at', '>=', $startDate);
+            }], 'target_amount')
+            ->withSum(['campaigns as total_raised' => function ($query) use ($startDate): void {
+                $query->join('donations', 'campaigns.id', '=', 'donations.campaign_id')
+                    ->where('donations.status', 'completed')
+                    ->where('donations.created_at', '>=', $startDate);
+            }], 'donations.amount')
+            ->get()
+            ->map(function ($category): array {
+                /** @var \App\Models\CampaignCategory & object{campaigns_count: int|null, total_target: float|null, total_raised: float|null} $category */
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'campaigns_count' => (int) ($category->campaigns_count ?? 0),
+                    'total_target' => round((float) ($category->total_target ?? 0), 2),
+                    'total_raised' => round((float) ($category->total_raised ?? 0), 2),
+                    'progress_percentage' => ($category->total_target ?? 0) > 0
+                        ? round(($category->total_raised ?? 0) / ($category->total_target ?? 1) * 100, 2)
+                        : 0,
+                ];
+            })->toArray();
     }
 
     /**
@@ -555,14 +555,14 @@ class AdminAnalyticsController extends Controller
             COUNT(DISTINCT users.id) as total_users,
             COUNT(DISTINCT CASE WHEN donations.id IS NOT NULL THEN users.id END) as active_users
         ')
-        ->leftJoin('donations', function ($join) use ($startDate): void {
-            $join->on('users.id', '=', 'donations.user_id')
-                ->where('donations.status', 'completed')
-                ->where('donations.created_at', '>=', $startDate);
-        })
-        ->groupBy('department')
-        ->orderBy('active_users', 'desc')
-        ->get();
+            ->leftJoin('donations', function ($join) use ($startDate): void {
+                $join->on('users.id', '=', 'donations.user_id')
+                    ->where('donations.status', 'completed')
+                    ->where('donations.created_at', '>=', $startDate);
+            })
+            ->groupBy('department')
+            ->orderBy('active_users', 'desc')
+            ->get();
 
         return $result->map(function ($item): array {
             /** @var \stdClass $item */
@@ -593,10 +593,10 @@ class AdminAnalyticsController extends Controller
             DATE_TRUNC(\'month\', created_at) as month,
             COUNT(*) as new_users
         ')
-        ->where('created_at', '>=', $startDate)
-        ->groupBy('month')
-        ->orderBy('month')
-        ->get();
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
 
         return $monthlyData->map(function ($item): array {
             /** @var \stdClass $item */

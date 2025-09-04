@@ -17,7 +17,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'User not authenticated'], 401);
         }
 
@@ -43,18 +43,18 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'User not authenticated'], 401);
         }
-        
+
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,'.$user->id,
             'department' => 'sometimes|required|string|max:255',
         ]);
 
         $oldValues = $user->only(['name', 'email', 'department']);
-        
+
         $user->update($request->only(['name', 'email', 'department']));
 
         $newValues = $user->only(['name', 'email', 'department']);
@@ -92,7 +92,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'User not authenticated'], 401);
         }
 
@@ -101,7 +101,7 @@ class ProfileController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'message' => 'The current password is incorrect.',
                 'errors' => ['current_password' => ['The current password is incorrect.']],

@@ -157,7 +157,7 @@ frontend/
 
 2. **Start All Services**
    ```bash
-   ./docker-dev.sh
+   make up
    # or manually:
    docker-compose up -d
    ```
@@ -170,8 +170,67 @@ frontend/
 
 4. **Run Tests**
    ```bash
+   make test
+   # or manually:
    docker-compose exec backend php artisan test
    ```
+
+### Using Make Commands (Recommended)
+The project includes a clean, focused Makefile for easy development. From the project root:
+
+```bash
+# See all available commands
+make help
+
+# Core Development
+make launch          # Complete initial setup and launch (for new developers)
+make dev             # Start development environment
+make fresh           # Fresh start: rebuild, migrate, seed
+
+# Docker Management
+make up              # Start all services
+make down            # Stop all services
+make restart         # Restart all services
+make build           # Build Docker images
+make rebuild         # Rebuild from scratch
+make status          # Show container status
+make logs            # View logs
+make cleanup         # Clean up ACME project Docker resources only
+make reset           # Interactive reset (with confirmation)
+
+# Backend Development
+make shell           # Backend container shell
+make artisan         # Run artisan commands (usage: make artisan cmd="migrate")
+make migrate         # Run migrations
+make migrate-fresh   # Fresh migrations
+make migrate-seed    # Migrate and seed
+make seed            # Seed database only
+
+# Testing & Quality Assurance
+make test            # Run all tests
+make test-pest       # Run Pest tests (recommended)
+make test-filter     # Run specific test (usage: make test-filter filter="AdminTest")
+make phpstan         # Run static analysis
+make format          # Format code with Laravel Pint
+make format-check    # Check code formatting
+make qa              # Run all QA checks
+make deploy-check    # Run all checks before deployment
+
+# Frontend Development
+make npm             # Run npm commands (usage: make npm cmd="install")
+make npm-install     # Install frontend dependencies
+make npm-build       # Build frontend for production
+make npm-test        # Run frontend tests
+make npm-lint        # Run frontend linting
+
+# Pre-commit Hooks
+make pre-commit-install   # Install hooks
+make pre-commit-run       # Run hooks manually
+make pre-commit-update    # Update to latest versions
+
+# Utility Commands
+make cache-clear     # Clear all Laravel caches
+make fix             # Auto-fix common issues
 
 ### Traditional Setup (Alternative)
 
@@ -185,7 +244,7 @@ frontend/
    ```bash
    cp .env.example .env
    ```
-   
+
    Update your `.env` file with:
    ```env
    DB_CONNECTION=pgsql
@@ -344,19 +403,6 @@ curl -X POST http://localhost:8000/api/campaigns \
 - [ ] CI/CD pipeline setup
 - [ ] Production deployment guide
 
-## Code Quality
-
-### Static Analysis with PHPStan
-
-Run static analysis:
-```bash
-# With Docker (recommended)
-docker-compose exec backend ./vendor/bin/phpstan analyse --memory-limit=512M
-
-# Traditional
-./vendor/bin/phpstan analyse --memory-limit=512M
-```
-
 ### Current PHPStan Status: Level 8
 - **Configuration**: Set to maximum strictness (Level 8)
 - **Issues Found**: 246 errors identified
@@ -368,13 +414,6 @@ docker-compose exec backend ./vendor/bin/phpstan analyse --memory-limit=512M
 3. **Array Value Types** - Iterable parameters need value type specifications
 4. **Null Safety** - Property access on potentially null objects
 5. **Type Mismatches** - Function parameter type validation
-
-### Code Quality Improvement Plan:
-- [ ] Add return types to all controller methods
-- [ ] Specify generic types for Eloquent relationships
-- [ ] Add array value type specifications
-- [ ] Implement null safety checks
-- [ ] Fix type mismatches in function calls
 
 ## 🧪 Testing
 

@@ -23,14 +23,12 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $remember_token
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * 
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Campaign> $campaigns
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Donation> $donations
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AuditLog> $auditLogs
  * @property-read int|null $campaigns_count
  * @property-read int|null $donations_count
  * @property-read int|null $audit_logs_count
- * 
  * @property float|null $total_donated Dynamic property for aggregated donation amount
  * @property int|null $donation_count Dynamic property for donation count
  * @property int|null $campaign_count Dynamic property for campaign count

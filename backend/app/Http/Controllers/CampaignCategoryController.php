@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\CampaignCategory;
-use Illuminate\Http\Request;
 
 class CampaignCategoryController extends Controller
 {
@@ -24,10 +23,10 @@ class CampaignCategoryController extends Controller
     {
         $campaignCategory->load(['campaigns' => function ($query): void {
             $query->where('status', 'active')
-                  ->where('start_date', '<=', now())
-                  ->where('end_date', '>=', now())
-                  ->with(['user'])
-                  ->orderBy('created_at', 'desc');
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->with(['user'])
+                ->orderBy('created_at', 'desc');
         }]);
 
         return response()->json($campaignCategory);

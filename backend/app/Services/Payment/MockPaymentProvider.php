@@ -16,9 +16,9 @@ class MockPaymentProvider implements PaymentProviderInterface
 
         // Determine success based on environment and testing context
         $success = $this->shouldSucceed();
-        
-        $transactionId = 'MOCK_' . Str::upper(Str::random(12));
-        
+
+        $transactionId = 'MOCK_'.Str::upper(Str::random(12));
+
         if ($success) {
             return new PaymentResult(
                 success: true,
@@ -30,7 +30,7 @@ class MockPaymentProvider implements PaymentProviderInterface
                     'currency' => 'USD',
                     'payment_method' => $paymentData['payment_method'] ?? 'credit_card',
                     'processed_at' => now()->toISOString(),
-                    'confirmation_code' => 'CONF_' . Str::upper(Str::random(8)),
+                    'confirmation_code' => 'CONF_'.Str::upper(Str::random(8)),
                 ]
             );
         }
@@ -42,7 +42,7 @@ class MockPaymentProvider implements PaymentProviderInterface
             responseData: [
                 'provider' => 'mock',
                 'amount' => $donation->amount,
-                'error_code' => 'MOCK_ERROR_' . rand(1000, 9999),
+                'error_code' => 'MOCK_ERROR_'.rand(1000, 9999),
                 'failed_at' => now()->toISOString(),
             ]
         );
@@ -72,8 +72,8 @@ class MockPaymentProvider implements PaymentProviderInterface
     public function refundPayment(Donation $donation): PaymentResult
     {
         // Mock refund - always succeeds for demo
-        $transactionId = 'REFUND_' . Str::upper(Str::random(12));
-        
+        $transactionId = 'REFUND_'.Str::upper(Str::random(12));
+
         return new PaymentResult(
             success: true,
             transactionId: $transactionId,
@@ -83,7 +83,7 @@ class MockPaymentProvider implements PaymentProviderInterface
                 'original_amount' => $donation->amount,
                 'refunded_amount' => $donation->amount,
                 'refunded_at' => now()->toISOString(),
-                'refund_id' => 'REF_' . Str::upper(Str::random(8)),
+                'refund_id' => 'REF_'.Str::upper(Str::random(8)),
             ]
         );
     }
@@ -96,14 +96,14 @@ class MockPaymentProvider implements PaymentProviderInterface
     public function validatePaymentData(array $paymentData): bool
     {
         // Basic validation for mock provider
-        return isset($paymentData['payment_method']) 
+        return isset($paymentData['payment_method'])
             && in_array($paymentData['payment_method'], ['credit_card', 'debit_card', 'paypal', 'bank_transfer', 'mock']);
     }
 
     public function handleWebhook(array $webhookData): ?PaymentResult
     {
         // Mock webhook handling
-        if (!isset($webhookData['event_type']) || !isset($webhookData['transaction_id'])) {
+        if (! isset($webhookData['event_type']) || ! isset($webhookData['transaction_id'])) {
             return null;
         }
 

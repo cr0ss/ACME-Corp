@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\AuditLog;
 use App\Models\Campaign;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CampaignService
@@ -13,7 +12,7 @@ class CampaignService
     /**
      * Create a new campaign.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function createCampaign(array $data, User $creator): Campaign
     {
@@ -44,13 +43,13 @@ class CampaignService
     /**
      * Update a campaign.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
-    public function updateCampaign(Campaign $campaign, array $data, User $user): Campaign|null
+    public function updateCampaign(Campaign $campaign, array $data, User $user): ?Campaign
     {
         return DB::transaction(function () use ($campaign, $data, $user) {
             $oldValues = $campaign->toArray();
-            
+
             $campaign->update($data);
 
             // Log campaign update
@@ -73,7 +72,7 @@ class CampaignService
     /**
      * Delete a campaign.
      */
-    public function deleteCampaign(Campaign $campaign, User $user): bool|null
+    public function deleteCampaign(Campaign $campaign, User $user): ?bool
     {
         // Check if campaign can be deleted
         if ($campaign->donations()->count() > 0) {
@@ -100,9 +99,9 @@ class CampaignService
     /**
      * Approve a campaign (admin only).
      */
-    public function approveCampaign(Campaign $campaign, User $admin): Campaign|null
+    public function approveCampaign(Campaign $campaign, User $admin): ?Campaign
     {
-        if (!$admin->is_admin) {
+        if (! $admin->is_admin) {
             throw new \Exception('Only administrators can approve campaigns');
         }
 
@@ -112,9 +111,9 @@ class CampaignService
     /**
      * Reject a campaign (admin only).
      */
-    public function rejectCampaign(Campaign $campaign, User $admin, ?string $reason = null): Campaign|null
+    public function rejectCampaign(Campaign $campaign, User $admin, ?string $reason = null): ?Campaign
     {
-        if (!$admin->is_admin) {
+        if (! $admin->is_admin) {
             throw new \Exception('Only administrators can reject campaigns');
         }
 
@@ -124,15 +123,15 @@ class CampaignService
     /**
      * Feature/unfeature a campaign (admin only).
      */
-    public function toggleFeatured(Campaign $campaign, User $admin, bool $featured = true): Campaign|null
+    public function toggleFeatured(Campaign $campaign, User $admin, bool $featured = true): ?Campaign
     {
-        if (!$admin->is_admin) {
+        if (! $admin->is_admin) {
             throw new \Exception('Only administrators can feature campaigns');
         }
 
         return DB::transaction(function () use ($campaign, $admin, $featured) {
             $oldValues = ['featured' => $campaign->featured];
-            
+
             $campaign->update(['featured' => $featured]);
 
             // Log campaign feature toggle
@@ -159,7 +158,7 @@ class CampaignService
     public function getCampaignStats(Campaign $campaign): array
     {
         $donations = $campaign->donations()->where('status', 'completed');
-        
+
         return [
             'total_donations' => $donations->count(),
             'total_donated' => $donations->sum('amount'),
@@ -184,7 +183,7 @@ class CampaignService
             ->where('end_date', '>=', now())
             ->withCount(['donations' => function ($query): void {
                 $query->where('status', 'completed')
-                      ->where('created_at', '>=', now()->subDays(7)); // Last 7 days
+                    ->where('created_at', '>=', now()->subDays(7)); // Last 7 days
             }])
             ->orderBy('donations_count', 'desc')
             ->orderBy('current_amount', 'desc')
@@ -220,11 +219,11 @@ class CampaignService
     /**
      * Update campaign status.
      */
-    private function updateCampaignStatus(Campaign $campaign, string $status, User $user, ?string $reason = null): Campaign|null
+    private function updateCampaignStatus(Campaign $campaign, string $status, User $user, ?string $reason = null): ?Campaign
     {
         return DB::transaction(function () use ($campaign, $status, $user, $reason) {
             $oldValues = ['status' => $campaign->status];
-            
+
             $campaign->update(['status' => $status]);
 
             $newValues = ['status' => $status];

@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Campaign;
-use App\Models\CampaignCategory;
 use App\Models\Donation;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class CampaignController extends Controller
 {
@@ -49,7 +47,7 @@ class CampaignController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search): void {
                 $q->where('title', 'ILIKE', "%{$search}%")
-                  ->orWhere('description', 'ILIKE', "%{$search}%");
+                    ->orWhere('description', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -100,11 +98,11 @@ class CampaignController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search): void {
                 $q->where('title', 'ILIKE', "%{$search}%")
-                  ->orWhere('description', 'ILIKE', "%{$search}%")
-                  ->orWhereHas('user', function ($userQuery) use ($search): void {
-                      $userQuery->where('name', 'ILIKE', "%{$search}%")
-                               ->orWhere('email', 'ILIKE', "%{$search}%");
-                  });
+                    ->orWhere('description', 'ILIKE', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search): void {
+                        $userQuery->where('name', 'ILIKE', "%{$search}%")
+                            ->orWhere('email', 'ILIKE', "%{$search}%");
+                    });
             });
         }
 
@@ -138,7 +136,7 @@ class CampaignController extends Controller
         ]);
 
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'User not authenticated'], 401);
         }
 
@@ -154,7 +152,7 @@ class CampaignController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search): void {
                 $q->where('title', 'ILIKE', "%{$search}%")
-                  ->orWhere('description', 'ILIKE', "%{$search}%");
+                    ->orWhere('description', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -183,7 +181,7 @@ class CampaignController extends Controller
         ]);
 
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'User not authenticated'], 401);
         }
 
@@ -243,12 +241,12 @@ class CampaignController extends Controller
     public function update(Request $request, Campaign $campaign): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'User not authenticated'], 401);
         }
 
         // Check if user owns the campaign or is admin
-        if ($campaign->user_id !== $user->id && !$user->is_admin) {
+        if ($campaign->user_id !== $user->id && ! $user->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -272,7 +270,7 @@ class CampaignController extends Controller
         if ($request->has('start_date') && $request->has('end_date') && strtotime($request->end_date) <= strtotime($request->start_date)) {
             return response()->json([
                 'message' => 'The end date must be after the start date.',
-                'errors' => ['end_date' => ['The end date must be after the start date.']]
+                'errors' => ['end_date' => ['The end date must be after the start date.']],
             ], 422);
         }
 
@@ -312,19 +310,19 @@ class CampaignController extends Controller
     public function destroy(Request $request, Campaign $campaign): \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'User not authenticated'], 401);
         }
 
         // Check if user owns the campaign or is admin
-        if ($campaign->user_id !== $user->id && !$user->is_admin) {
+        if ($campaign->user_id !== $user->id && ! $user->is_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         // Can't delete if there are donations
         if ($campaign->donations()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete campaign with existing donations'
+                'message' => 'Cannot delete campaign with existing donations',
             ], 422);
         }
 

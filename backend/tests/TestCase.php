@@ -54,7 +54,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Verify we're using the test database
         $currentDb = config('database.connections.pgsql_testing.database');
         if ($currentDb !== 'acme_csr_test') {

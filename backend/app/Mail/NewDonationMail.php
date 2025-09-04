@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Models\Donation;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -25,7 +24,7 @@ class NewDonationMail extends Mailable
     {
         return new Envelope(
             from: config('mail.from.address'),
-            subject: 'New donation received for ' . $this->donation->campaign->title,
+            subject: 'New donation received for '.$this->donation->campaign->title,
         );
     }
 

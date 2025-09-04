@@ -21,7 +21,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $featured
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * 
  * @property-read \App\Models\User $user
  * @property-read \App\Models\CampaignCategory $category
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Donation> $donations
@@ -96,7 +95,7 @@ class Campaign extends Model
         if ($this->target_amount <= 0) {
             return 0.0;
         }
-        
+
         return round(($this->current_amount / $this->target_amount) * 100, 2);
     }
 
@@ -114,7 +113,7 @@ class Campaign extends Model
     public function updateStatus(): void
     {
         $now = now();
-        
+
         // Check if campaign should be active
         if ($this->start_date <= $now && $this->end_date >= $now) {
             if ($this->status !== 'active') {
@@ -125,21 +124,19 @@ class Campaign extends Model
         elseif ($this->end_date < $now) {
             if ($this->is_goal_reached && $this->status !== 'completed') {
                 $this->update(['status' => 'completed']);
-            } elseif (!$this->is_goal_reached && $this->status !== 'ended') {
+            } elseif (! $this->is_goal_reached && $this->status !== 'ended') {
                 $this->update(['status' => 'ended']);
             }
         }
     }
-
-
 
     /**
      * Check if campaign is active.
      */
     public function getIsActiveAttribute(): bool
     {
-        return $this->status === 'active' 
-            && $this->start_date <= now() 
+        return $this->status === 'active'
+            && $this->start_date <= now()
             && $this->end_date >= now();
     }
 }

@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Campaign;
-use App\Models\User;
 use App\Models\CampaignCategory;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
@@ -23,7 +23,7 @@ test('user can view campaigns list', function () {
         ->getJson('/api/campaigns');
 
     $response->assertOk();
-    
+
     $responseData = $response->json();
     expect($responseData)->toBeArray();
     expect(count($responseData))->toBeGreaterThan(0);
@@ -48,7 +48,7 @@ test('user can create a campaign', function () {
                 'title' => 'Save the Environment',
                 'description' => 'Help us protect our planet',
                 'target_amount' => '5000.00',
-            ]
+            ],
         ]);
 
     $this->assertDatabaseHas('campaigns', [
@@ -90,7 +90,7 @@ test('user can view a specific campaign', function () {
             'campaign' => [
                 'id' => $campaign->id,
                 'title' => $campaign->title,
-            ]
+            ],
         ]);
 });
 
@@ -113,7 +113,7 @@ test('user can update their own campaign', function () {
             'campaign' => [
                 'title' => 'Updated Campaign Title',
                 'description' => 'Updated description',
-            ]
+            ],
         ]);
 
     $this->assertDatabaseHas('campaigns', [

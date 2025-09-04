@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Campaign;
-use App\Models\User;
 use App\Models\CampaignCategory;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
@@ -14,7 +14,7 @@ beforeEach(function () {
 test('campaign can be created with required fields', function () {
     $user = User::factory()->create();
     $category = CampaignCategory::first();
-    
+
     $campaign = Campaign::factory()->create([
         'user_id' => $user->id,
         'category_id' => $category->id,
@@ -33,7 +33,7 @@ test('campaign can be created with required fields', function () {
 test('campaign progress can be calculated', function () {
     $user = User::factory()->create();
     $category = CampaignCategory::first();
-    
+
     $campaign = Campaign::factory()->create([
         'user_id' => $user->id,
         'category_id' => $category->id,
@@ -42,14 +42,14 @@ test('campaign progress can be calculated', function () {
     ]);
 
     $progress = ($campaign->current_amount / $campaign->target_amount) * 100;
-    
+
     expect($progress)->toBe(25.0);
 });
 
 test('campaign can have different statuses', function () {
     $user = User::factory()->create();
     $category = CampaignCategory::first();
-    
+
     $activeCampaign = Campaign::factory()->create([
         'user_id' => $user->id,
         'category_id' => $category->id,
@@ -73,7 +73,7 @@ test('campaign can have different statuses', function () {
 test('campaign belongs to a user', function () {
     $user = User::factory()->create();
     $category = CampaignCategory::first();
-    
+
     $campaign = Campaign::factory()->create([
         'user_id' => $user->id,
         'category_id' => $category->id,
@@ -86,7 +86,7 @@ test('campaign belongs to a user', function () {
 test('campaign belongs to a category', function () {
     $user = User::factory()->create();
     $category = CampaignCategory::first();
-    
+
     $campaign = Campaign::factory()->create([
         'user_id' => $user->id,
         'category_id' => $category->id,
@@ -99,22 +99,22 @@ test('campaign belongs to a category', function () {
 test('campaign has all required fields', function () {
     $user = User::factory()->create();
     $category = CampaignCategory::first();
-    
+
     $campaign = Campaign::factory()->create([
         'user_id' => $user->id,
         'category_id' => $category->id,
     ]);
 
     expect($campaign)->toHaveKeys([
-        'id', 'user_id', 'category_id', 'title', 'description', 
-        'target_amount', 'current_amount', 'status', 'start_date', 'end_date'
+        'id', 'user_id', 'category_id', 'title', 'description',
+        'target_amount', 'current_amount', 'status', 'start_date', 'end_date',
     ]);
 });
 
 test('campaign can be featured', function () {
     $user = User::factory()->create();
     $category = CampaignCategory::first();
-    
+
     $featuredCampaign = Campaign::factory()->create([
         'user_id' => $user->id,
         'category_id' => $category->id,
@@ -134,10 +134,10 @@ test('campaign can be featured', function () {
 test('campaign dates are properly cast', function () {
     $user = User::factory()->create();
     $category = CampaignCategory::first();
-    
+
     $startDate = now()->subDays(1);
     $endDate = now()->addDays(30);
-    
+
     $campaign = Campaign::factory()->create([
         'user_id' => $user->id,
         'category_id' => $category->id,

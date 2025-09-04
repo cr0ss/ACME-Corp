@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Api;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Campaign;
-use App\Models\Donation;
 use App\Models\CampaignCategory;
+use App\Models\Donation;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class DonationTest extends TestCase
 {
@@ -16,7 +16,7 @@ class DonationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Use robust seeding method that handles database corruption
         $this->seedCampaignCategoriesIfNeeded();
     }
@@ -247,7 +247,7 @@ class DonationTest extends TestCase
 
         $response->assertOk()
             ->assertHeader('Content-Type', 'application/pdf')
-            ->assertHeader('Content-Disposition', 'attachment; filename="receipt-' . $donation->id . '.pdf"');
+            ->assertHeader('Content-Disposition', 'attachment; filename="receipt-'.$donation->id.'.pdf"');
     }
 
     public function test_cannot_get_receipt_for_pending_donation(): void
@@ -260,7 +260,7 @@ class DonationTest extends TestCase
 
         $response->assertForbidden()
             ->assertJsonStructure([
-                'message'
+                'message',
             ]);
     }
 
@@ -359,7 +359,7 @@ class DonationTest extends TestCase
         // Should succeed if message length validation allows it
         // or fail with appropriate validation error
         $this->assertTrue(
-            $response->status() === 201 || 
+            $response->status() === 201 ||
             $response->status() === 422
         );
     }

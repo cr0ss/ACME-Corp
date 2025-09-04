@@ -12,6 +12,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
+      - ./.env:/var/www/html/.env
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     entrypoint: ["/bin/sh", "-c", "php-fpm"]
     environment:
@@ -133,6 +134,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
+      - ./.env:/var/www/html/.env
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     environment:
       - APP_ENV=local
@@ -165,6 +167,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
+      - ./.env:/var/www/html/.env
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     environment:
       - APP_ENV=local

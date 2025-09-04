@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Api;
 
-use Tests\TestCase;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
@@ -170,7 +170,7 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('auth_token');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token->plainTextToken)
             ->postJson('/api/logout');
 
         $response->assertOk()
@@ -190,7 +190,7 @@ class AuthenticationTest extends TestCase
         $token1 = $user->createToken('token1');
         $token2 = $user->createToken('token2');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token1->plainTextToken)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token1->plainTextToken)
             ->postJson('/api/logout-all');
 
         $response->assertOk()

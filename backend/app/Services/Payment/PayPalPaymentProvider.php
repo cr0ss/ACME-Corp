@@ -13,18 +13,18 @@ class PayPalPaymentProvider implements PaymentProviderInterface
     {
         // TODO: Implement actual PayPal integration
         // This is a placeholder implementation
-        
-        if (!$this->validatePaymentData($paymentData)) {
+
+        if (! $this->validatePaymentData($paymentData)) {
             return new PaymentResult(
                 success: false,
-                transactionId: 'PAYPAL_' . Str::upper(Str::random(12)),
+                transactionId: 'PAYPAL_'.Str::upper(Str::random(12)),
                 errorMessage: 'Invalid payment data'
             );
         }
 
         // Placeholder for PayPal payment processing
         $transactionId = Str::upper(Str::random(17)); // PayPal transaction ID format
-        
+
         return new PaymentResult(
             success: true,
             transactionId: $transactionId,
@@ -45,7 +45,7 @@ class PayPalPaymentProvider implements PaymentProviderInterface
     {
         // TODO: Implement actual PayPal refund
         $refundId = Str::upper(Str::random(17));
-        
+
         return new PaymentResult(
             success: true,
             transactionId: $refundId,
@@ -69,7 +69,7 @@ class PayPalPaymentProvider implements PaymentProviderInterface
 
     public function validatePaymentData(array $paymentData): bool
     {
-        return isset($paymentData['payment_id']) 
+        return isset($paymentData['payment_id'])
             || isset($paymentData['payer_id'])
             || isset($paymentData['order_id']);
     }
@@ -77,8 +77,8 @@ class PayPalPaymentProvider implements PaymentProviderInterface
     public function handleWebhook(array $webhookData): ?PaymentResult
     {
         // TODO: Implement PayPal webhook signature verification
-        
-        if (!isset($webhookData['event_type']) || !isset($webhookData['resource']['id'])) {
+
+        if (! isset($webhookData['event_type']) || ! isset($webhookData['resource']['id'])) {
             return null;
         }
 

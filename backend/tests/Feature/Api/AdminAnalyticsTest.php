@@ -16,7 +16,7 @@ class AdminAnalyticsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Use robust seeding method that handles database corruption
         $this->seedCampaignCategoriesIfNeeded();
     }
@@ -245,7 +245,7 @@ class AdminAnalyticsTest extends TestCase
             ->getJson('/api/admin/analytics/donations?period=30');
 
         $response->assertOk();
-        
+
         $data = $response->json();
         // Should only include donation from 10 days ago, not 40 days ago
         $this->assertEquals(1, $data['summary']['total_donations']);
