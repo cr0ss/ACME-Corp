@@ -78,13 +78,46 @@
                   Cancelled
                 </span>
               </div>
-              
+
 
             </div>
 
+            <!-- Campaign Status Info -->
+            <div v-if="campaignStatusInfo" class="p-4 rounded-lg border text-sm font-medium"
+              :class="campaignStatusInfo.colorClass"
+            >
+              <div class="flex items-center gap-2">
+                <svg v-if="campaignStatusInfo.icon === 'clock'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
+                <svg v-else-if="campaignStatusInfo.icon === 'x'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                <span>{{ campaignStatusInfo.message }}</span>
+              </div>
+            </div>
+
             <!-- Donate Button -->
-            <div v-if="campaign.status === 'active' && authStore.isAuthenticated">
-              <button @click="showDonateModal = true" class="btn-primary w-full">Donate Now</button>
+            <div v-if="canDonate">
+              <button
+                @click="handleDonateClick"
+                :disabled="!isDonationAllowed"
+                class="w-full px-6 py-3 rounded-lg border transition-all duration-200 font-medium"
+                :class="buttonClassesPrimary"
+              >
+                {{ donationButtonTextPrimary }}
+              </button>
+
+              <!-- Tooltip for disabled buttons -->
+              <div v-if="!isDonationAllowed"
+                   class="mt-2 text-center text-sm text-gray-600">
+                <span v-if="campaignStatusInfo?.type === 'not-started'">
+                  Campaign hasn't started yet
+                </span>
+                <span v-else-if="campaignStatusInfo?.type === 'ended'">
+                  Campaign has ended
+                </span>
+              </div>
             </div>
             <div v-else-if="!authStore.isAuthenticated" class="p-4 bg-blue-50 rounded-lg">
               <p class="text-blue-800 text-center">
@@ -147,12 +180,23 @@ import { useAuthStore } from '@/stores/auth'
 import { useCampaignsStore } from '@/stores/campaigns'
 import DonationModal from '@/components/donations/DonationModal.vue'
 import { formatNumber, formatPercentage } from '@/utils/formatters'
+import { useCampaignDonation } from '@/composables/useCampaignDonation'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const campaignsStore = useCampaignsStore()
 
 const showDonateModal = ref(false)
+
+// Handle donate button click
+const handleDonateClick = () => {
+  if (!isDonationAllowed.value) {
+    console.log('Donation not allowed for this campaign')
+    return
+  }
+
+  showDonateModal.value = true
+}
 
 // Handle successful donation
 const handleDonationSuccess = (donation: { amount: number }) => {
@@ -167,6 +211,16 @@ const handleDonationSuccess = (donation: { amount: number }) => {
 
 // Computed
 const campaign = computed(() => campaignsStore.currentCampaign)
+
+// Use the shared campaign donation composable
+const {
+  canDonate,
+  isDonationAllowed,
+  donationButtonTextPrimary,
+  campaignStatusInfo,
+  buttonClassesPrimary
+} = useCampaignDonation(campaign.value || {} as Campaign)
+
 const stats = computed(() => {
   // This would come from the API response
   return {
@@ -223,9 +277,9 @@ function getDaysRemaining(endDate: string): string {
 function calculateProgressPercentage(): number {
   const current = Number(campaign.value?.current_amount) || 0
   const target = Number(campaign.value?.target_amount) || 1
-  
+
   if (target <= 0) return 0
-  
+
   const percentage = (current / target) * 100
   return Math.min(Math.max(percentage, 0), 100) // Clamp between 0 and 100
 }

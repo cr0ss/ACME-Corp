@@ -20,6 +20,22 @@
       <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
         {{ campaign.title }}
       </h3>
+
+              <!-- Campaign status info - moved here for better visibility -->
+        <div v-if="campaignStatusInfo" class="mb-3 p-2 rounded-md text-sm font-medium border"
+          :class="campaignStatusInfo.colorClass"
+        >
+          <div class="flex items-center gap-2">
+            <svg v-if="campaignStatusInfo.icon === 'clock'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+            </svg>
+            <svg v-else-if="campaignStatusInfo.icon === 'x'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ campaignStatusInfo.message }}</span>
+          </div>
+        </div>
+
       <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ campaign.description }}</p>
 
       <!-- Progress Bar -->
@@ -57,17 +73,34 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="mt-4 pt-4 border-t border-gray-200 flex gap-2">
-        <router-link :to="`/campaigns/${campaign.id}`" class="btn-primary flex-1 text-center">
-          View Details
-        </router-link>
-        <button
-          v-if="campaign.status === 'active' && authStore.isAuthenticated"
+      <div class="mt-4 pt-4 border-t border-gray-200">
+        <!-- Action buttons -->
+        <div class="flex gap-2">
+          <router-link :to="`/campaigns/${campaign.id}`" class="btn-primary flex-1 text-center">
+            View Details
+          </router-link>
+                  <button
+          v-if="canDonate"
           @click="handleDonateClick"
-          class="btn-outline px-3"
+          class="px-3 py-2 rounded-md border transition-all duration-200 font-medium relative group"
+          :disabled="!isDonationAllowed"
+          :class="buttonClasses"
         >
-          Donate
+          {{ donationButtonText }}
+
+          <!-- Tooltip for disabled buttons -->
+          <div v-if="!isDonationAllowed"
+               class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+            <span v-if="campaignStatusInfo?.type === 'not-started'">
+              Campaign hasn't started yet
+            </span>
+            <span v-else-if="campaignStatusInfo?.type === 'ended'">
+              Campaign has ended
+            </span>
+            <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+          </div>
         </button>
+        </div>
       </div>
     </div>
 
@@ -77,7 +110,7 @@
 
 <script setup lang="ts">
 import type { Campaign } from '@/services/api'
-import { useAuthStore } from '@/stores/auth'
+import { useCampaignDonation } from '@/composables/useCampaignDonation'
 
 interface Props {
   campaign: Campaign
@@ -85,12 +118,22 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const authStore = useAuthStore()
+// Use the shared campaign donation composable
+const {
+  canDonate,
+  isDonationAllowed,
+  donationButtonText,
+  campaignStatusInfo,
+  buttonClasses,
+  handleDonateClick: baseHandleDonateClick
+} = useCampaignDonation(props.campaign)
 
 // Handle donate button click
 const handleDonateClick = () => {
-  // Emit the donate event to parent component to open the modal
-  emit('donate', props.campaign)
+  if (baseHandleDonateClick()) {
+    // Emit the donate event to parent component to open the modal
+    emit('donate', props.campaign)
+  }
 }
 
 // Emits
@@ -152,6 +195,8 @@ function getDaysRemaining(endDate: string): string {
     return `${diffDays} days left`
   }
 }
+
+
 </script>
 
 <style scoped>

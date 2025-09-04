@@ -58,6 +58,7 @@
           v-for="campaign in campaignsStore.featuredCampaigns.slice(0, 3)"
           :key="campaign.id"
           :campaign="campaign"
+          @donate="handleDonate"
         />
       </div>
     </section>
@@ -76,6 +77,7 @@
           v-for="campaign in campaignsStore.trendingCampaigns.slice(0, 3)"
           :key="campaign.id"
           :campaign="campaign"
+          @donate="handleDonate"
         />
       </div>
     </section>
@@ -132,6 +134,14 @@
       </p>
       <router-link to="/login" class="btn-primary"> Sign In to Get Started </router-link>
     </section>
+
+    <!-- Donation Modal -->
+    <DonationModal
+      v-if="showDonateModal"
+      :campaign="selectedCampaign"
+      @close="showDonateModal = false"
+      @success="handleDonationSuccess"
+    />
   </div>
 </template>
 
@@ -141,10 +151,16 @@ import { useAuthStore } from '@/stores/auth'
 import { useCampaignsStore } from '@/stores/campaigns'
 import { campaignsApi } from '@/services/api'
 import CampaignCard from '@/components/campaigns/CampaignCard.vue'
+import DonationModal from '@/components/donations/DonationModal.vue'
 import { formatSmartCurrency, formatNumber } from '@/utils/formatters'
+import type { Campaign } from '@/services/api'
 
 const authStore = useAuthStore()
 const campaignsStore = useCampaignsStore()
+
+// Modal state
+const showDonateModal = ref(false)
+const selectedCampaign = ref<Campaign | null>(null)
 
 // Reactive state
 const totalRaisedData = ref({
@@ -173,6 +189,19 @@ const totalRaised = computed(() => {
 const totalDonationsCount = computed(() => {
   return totalRaisedData.value.total_donations
 })
+
+// Event handlers
+function handleDonate(campaign: Campaign) {
+  selectedCampaign.value = campaign
+  showDonateModal.value = true
+}
+
+function handleDonationSuccess() {
+  showDonateModal.value = false
+  // Optionally refresh the data to show updated progress
+  campaignsStore.fetchCampaigns()
+  campaignsStore.fetchTrendingCampaigns()
+}
 
 onMounted(async () => {
   // Fetch campaigns (including featured ones) and trending campaigns
