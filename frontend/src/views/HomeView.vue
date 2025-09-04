@@ -204,9 +204,9 @@ function handleDonationSuccess() {
 }
 
 onMounted(async () => {
-  // Fetch campaigns (including featured ones) and trending campaigns
+  // Fetch only featured and trending campaigns (optimized)
   await Promise.all([
-    campaignsStore.fetchCampaigns(),
+    campaignsStore.fetchFeaturedCampaigns(),
     campaignsStore.fetchTrendingCampaigns()
   ])
 

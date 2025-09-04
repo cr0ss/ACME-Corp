@@ -44,6 +44,15 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            // Performance optimizations
+            'options' => [
+                PDO::ATTR_PERSISTENT => true, // Enable persistent connections
+                PDO::ATTR_EMULATE_PREPARES => false, // Use native prepared statements
+            ],
+            'pool' => [
+                'min' => 2, // Minimum connections
+                'max' => 10, // Maximum connections
+            ],
         ],
 
         'pgsql_testing' => [

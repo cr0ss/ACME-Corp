@@ -63,21 +63,21 @@ class ApiService {
   // Special method for file downloads that preserves headers
   async getFile(url: string, config?: AxiosRequestConfig): Promise<{ data: Blob; filename?: string; contentType?: string }> {
     const response = await this.api.get(url, { ...config, responseType: 'blob' })
-    
+
     // Extract filename from Content-Disposition header
     const contentDisposition = response.headers['content-disposition']
     let filename: string | undefined
-    
+
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
       if (filenameMatch && filenameMatch[1]) {
         filename = filenameMatch[1].replace(/['"]/g, '')
       }
     }
-    
+
     // Extract content type
     const contentType = response.headers['content-type']
-    
+
     return {
       data: response.data,
       filename,
@@ -256,6 +256,7 @@ export const campaignsApi = {
 
   delete: (id: number): Promise<{ message: string }> => apiService.delete(`/campaigns/${id}`),
 
+  getFeatured: (): Promise<PaginatedResponse<Campaign>> => apiService.get('/campaigns/home/featured'),
   getTrending: (): Promise<PaginatedResponse<Campaign>> => apiService.get('/campaigns/trending'),
 
   getEndingSoon: (): Promise<PaginatedResponse<Campaign>> =>
@@ -298,7 +299,7 @@ export const donationsApi = {
 
   getById: (id: number): Promise<Donation> => apiService.get(`/donations/${id}`),
 
-  getReceipt: (id: number): Promise<{ data: Blob; filename?: string; contentType?: string }> => 
+  getReceipt: (id: number): Promise<{ data: Blob; filename?: string; contentType?: string }> =>
     apiService.getFile(`/donations/${id}/receipt`),
 }
 

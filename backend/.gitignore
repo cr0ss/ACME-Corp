@@ -14,8 +14,11 @@
 /.vscode
 /.zed
 /auth.json
-/public/storage
 /storage/*.key
+/storage/app/*
+/storage/framework/*
+/storage/logs/*
+/public/storage
 /storage/pail
 /vendor
 Homestead.json

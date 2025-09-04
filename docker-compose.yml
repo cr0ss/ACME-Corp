@@ -12,7 +12,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
-      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/php.ini
     entrypoint: ["/bin/sh", "-c", "php-fpm"]
     environment:
       - APP_ENV=local
@@ -35,6 +35,25 @@ services:
       - MAIL_USERNAME=null
       - MAIL_PASSWORD=null
       - MAIL_ENCRYPTION=null
+      - PHP_OPCACHE_ENABLE=1
+      - PHP_OPCACHE_MEMORY_CONSUMPTION=256
+      - PHP_OPCACHE_MAX_ACCELERATED_FILES=20000
+      - PHP_OPCACHE_REVALIDATE_FREQ=0
+      - PHP_OPCACHE_FAST_SHUTDOWN=1
+      - PHP_OPCACHE_ENABLE_CLI=1
+      - PHP_OPCACHE_VALIDATE_TIMESTAMPS=0
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     depends_on:
       - postgres
       - redis
@@ -72,11 +91,30 @@ services:
       POSTGRES_USER: acme_user
       POSTGRES_PASSWORD: acme_password
       POSTGRES_ROOT_PASSWORD: acme_root_password
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
+      POSTGRES_WORK_MEM: 16MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
+      POSTGRES_CHECKPOINT_SEGMENTS: 32
+      POSTGRES_WAL_BUFFERS: 16MB
+      POSTGRES_MAX_CONNECTIONS: 200
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     networks:
       - acme_network
 
@@ -85,11 +123,23 @@ services:
     image: redis:7-alpine
     container_name: acme_redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --replica-read-only no
+    command: redis-server --appendonly yes --replica-read-only no --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     ports:
       - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     networks:
       - acme_network
 
@@ -106,6 +156,21 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./backend/public:/var/www/html/public
       - ./backend/storage/app/public:/var/www/html/storage/app/public
+    environment:
+      - NGINX_WORKER_PROCESSES=2
+      - NGINX_WORKER_CONNECTIONS=2048
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     depends_on:
       - backend
     networks:

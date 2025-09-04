@@ -76,4 +76,26 @@ class Donation extends Model
     {
         return $this->hasOne(PaymentTransaction::class);
     }
+
+    /**
+     * Scope for completed donations.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Donation>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<Donation>
+     */
+    public function scopeCompleted(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('status', 'completed');
+    }
+
+    /**
+     * Scope for active donations (pending or completed).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Donation>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<Donation>
+     */
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->whereIn('status', ['pending', 'completed']);
+    }
 }
