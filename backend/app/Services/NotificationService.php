@@ -2,13 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\User;
-use App\Models\Campaign;
-use App\Mail\DonationConfirmationMail;
-use App\Mail\NewDonationMail;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class NotificationService
 {
@@ -19,17 +17,17 @@ class NotificationService
     {
         try {
             $donation->load(['campaign', 'user']);
-            
+
             // Send the actual email
             Mail::to($donation->user->email)->send(new \App\Mail\DonationConfirmationMail($donation));
-            
+
             Log::info('Donation confirmation email sent', [
                 'donation_id' => $donation->id,
                 'donor_email' => $donation->user->email,
                 'amount' => $donation->amount,
                 'campaign' => $donation->campaign->title,
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send donation confirmation email', [
                 'donation_id' => $donation->id,
@@ -45,7 +43,7 @@ class NotificationService
     {
         try {
             $donation->load(['campaign.user', 'user']);
-            
+
             // Don't notify if donor and campaign owner are the same
             if ($donation->user_id === $donation->campaign->user_id) {
                 return;
@@ -61,7 +59,7 @@ class NotificationService
                 'amount' => $donation->amount,
                 'campaign' => $donation->campaign->title,
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send campaign owner notification', [
                 'donation_id' => $donation->id,
@@ -87,7 +85,7 @@ class NotificationService
 
             // In a real implementation:
             // Mail::to($donation->user->email)->send(new RefundNotificationMail($donation));
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send refund notification', [
                 'donation_id' => $donation->id,
@@ -112,7 +110,7 @@ class NotificationService
 
             // In a real implementation:
             // Mail::to($campaign->user->email)->send(new CampaignApprovedMail($campaign));
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send campaign approval notification', [
                 'campaign_id' => $campaign->id,
@@ -138,7 +136,7 @@ class NotificationService
 
             // In a real implementation:
             // Mail::to($campaign->user->email)->send(new CampaignRejectedMail($campaign, $reason));
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send campaign rejection notification', [
                 'campaign_id' => $campaign->id,
@@ -165,7 +163,7 @@ class NotificationService
 
             // In a real implementation:
             // Mail::to($campaign->user->email)->send(new CampaignMilestoneMail($campaign, $milestone));
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send campaign milestone notification', [
                 'campaign_id' => $campaign->id,
@@ -191,7 +189,7 @@ class NotificationService
 
             // In a real implementation:
             // Mail::to($campaign->user->email)->send(new CampaignEndingSoonMail($campaign));
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send campaign ending soon notification', [
                 'campaign_id' => $campaign->id,
@@ -207,11 +205,11 @@ class NotificationService
     {
         try {
             $users = User::where('role', 'employee')->get();
-            
+
             foreach ($users as $user) {
                 $this->sendUserWeeklyDigest($user);
             }
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send weekly digest', [
                 'error' => $e->getMessage(),
@@ -232,7 +230,7 @@ class NotificationService
                 ->where('end_date', '>=', now())
                 ->withCount(['donations' => function ($query): void {
                     $query->where('status', 'completed')
-                          ->where('created_at', '>=', now()->subDays(7));
+                        ->where('created_at', '>=', now()->subDays(7));
                 }])
                 ->orderBy('donations_count', 'desc')
                 ->limit(5)
@@ -246,7 +244,7 @@ class NotificationService
 
             // In a real implementation:
             // Mail::to($user->email)->send(new WeeklyDigestMail($user, $trendingCampaigns));
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send weekly digest to user', [
                 'user_id' => $user->id,
@@ -258,7 +256,7 @@ class NotificationService
     /**
      * Send admin notification about suspicious activity.
      *
-     * @param array<string, mixed> $details
+     * @param  array<string, mixed>  $details
      */
     public function sendSuspiciousActivityNotification(string $activity, array $details): void
     {
@@ -278,7 +276,7 @@ class NotificationService
             // foreach ($admins as $admin) {
             //     Mail::to($admin->email)->send(new SuspiciousActivityMail($activity, $details));
             // }
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to send suspicious activity notification', [
                 'activity' => $activity,

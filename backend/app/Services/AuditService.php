@@ -4,15 +4,15 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class AuditService
 {
     /**
      * Get audit logs with filtering options.
      *
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, \App\Models\AuditLog>
      */
     public function getAuditLogs(array $filters = [], int $perPage = 50): \Illuminate\Contracts\Pagination\LengthAwarePaginator
@@ -68,9 +68,9 @@ class AuditService
             ->toArray();
 
         $dailyActivity = $logs->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('COUNT(*) as actions')
-            )
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('COUNT(*) as actions')
+        )
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -167,8 +167,8 @@ class AuditService
     /**
      * Create an audit log entry.
      *
-     * @param array<string, mixed>|null $oldValues
-     * @param array<string, mixed>|null $newValues
+     * @param  array<string, mixed>|null  $oldValues
+     * @param  array<string, mixed>|null  $newValues
      */
     public function createLog(
         ?int $userId,
@@ -200,14 +200,14 @@ class AuditService
     public function cleanupOldLogs(int $keepDays = 365): int
     {
         $cutoffDate = now()->subDays($keepDays);
-        
+
         return AuditLog::where('created_at', '<', $cutoffDate)->delete();
     }
 
     /**
      * Export audit logs.
      *
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      * @return \Illuminate\Support\Collection<int, array<string, mixed>>
      */
     public function exportAuditLogs(array $filters = []): Collection
@@ -363,6 +363,7 @@ class AuditService
 
         /** @var \Illuminate\Support\Collection<string, \Illuminate\Support\Collection<int, array<string, mixed>>> $result */
         $result = collect($suspiciousActivities);
+
         return $result;
     }
 }

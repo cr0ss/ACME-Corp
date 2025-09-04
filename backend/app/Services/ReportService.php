@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
@@ -220,11 +220,11 @@ class ReportService
         return Campaign::with(['category', 'user'])
             ->withSum(['donations' => function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
-                      ->whereBetween('created_at', [$startDate, $endDate]);
+                    ->whereBetween('created_at', [$startDate, $endDate]);
             }], 'amount')
             ->withCount(['donations' => function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
-                      ->whereBetween('created_at', [$startDate, $endDate]);
+                    ->whereBetween('created_at', [$startDate, $endDate]);
             }])
             ->orderBy('donations_sum_amount', 'desc')
             ->limit($limit)

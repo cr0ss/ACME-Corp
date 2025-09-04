@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property array<string, mixed>|null $response_data
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * 
  * @property-read \App\Models\Donation $donation
  */
 class PaymentTransaction extends Model

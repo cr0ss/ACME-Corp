@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $message
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * 
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Campaign $campaign
  * @property-read \App\Models\PaymentTransaction|null $paymentTransaction

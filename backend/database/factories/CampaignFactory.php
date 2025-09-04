@@ -38,6 +38,7 @@ class CampaignFactory extends Factory
                 // If category_id is provided in the factory call, use it
                 // Otherwise, use an existing category or create a new one
                 $category = CampaignCategory::inRandomOrder()->first();
+
                 return $category ? $category->id : CampaignCategory::factory();
             },
             'user_id' => User::factory(),
@@ -86,6 +87,7 @@ class CampaignFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $targetAmount = $attributes['target_amount'] ?? $this->faker->randomFloat(2, 500, 50000);
+
             return [
                 'status' => 'completed',
                 'current_amount' => $targetAmount,

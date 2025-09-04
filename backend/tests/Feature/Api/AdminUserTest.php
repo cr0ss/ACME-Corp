@@ -65,7 +65,7 @@ class AdminUserTest extends TestCase
 
         $response->assertOk();
         $data = $response->json('data');
-        
+
         $this->assertCount(1, $data);
         $this->assertEquals($targetUser->id, $data[0]['id']);
     }
@@ -81,7 +81,7 @@ class AdminUserTest extends TestCase
 
         $response->assertOk();
         $data = $response->json('data');
-        
+
         $this->assertCount(3, $data);
         foreach ($data as $user) {
             $this->assertEquals('Engineering', $user['department']);
@@ -339,7 +339,7 @@ class AdminUserTest extends TestCase
 
         foreach ($endpoints as $endpoint) {
             $response = $this->actingAs($user, 'sanctum');
-            
+
             switch ($endpoint['method']) {
                 case 'get':
                     $response = $response->getJson($endpoint['url']);
@@ -369,7 +369,7 @@ class AdminUserTest extends TestCase
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors([
-                'name', 'email', 'employee_id', 'department', 'role', 'password'
+                'name', 'email', 'employee_id', 'department', 'role', 'password',
             ]);
 
         // Test duplicate email

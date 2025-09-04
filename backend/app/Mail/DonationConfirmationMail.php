@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Models\Donation;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -25,7 +24,7 @@ class DonationConfirmationMail extends Mailable
     {
         return new Envelope(
             from: config('mail.from.address'),
-            subject: 'Thank you for your donation to ' . $this->donation->campaign->title,
+            subject: 'Thank you for your donation to '.$this->donation->campaign->title,
         );
     }
 
@@ -63,7 +62,7 @@ class DonationConfirmationMail extends Mailable
     private function getReceiptData(): array
     {
         return [
-            'receipt_id' => 'RCP_' . $this->donation->id . '_' . ($this->donation->created_at?->format('Ymd') ?? 'Unknown'),
+            'receipt_id' => 'RCP_'.$this->donation->id.'_'.($this->donation->created_at?->format('Ymd') ?? 'Unknown'),
             'amount' => $this->donation->amount,
             'currency' => 'USD',
             'date' => $this->donation->created_at?->toDateString() ?? 'Unknown',

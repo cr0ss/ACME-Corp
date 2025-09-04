@@ -28,8 +28,8 @@ class DonationSeeder extends Seeder
 
             while ($remainingAmount > 0 && $donationCount < 100) { // Max 100 donations per campaign
                 // Choose a random donation amount that doesn't exceed remaining
-                $possibleAmounts = array_filter($donationAmounts, fn($amount) => $amount <= $remainingAmount);
-                
+                $possibleAmounts = array_filter($donationAmounts, fn ($amount) => $amount <= $remainingAmount);
+
                 if (empty($possibleAmounts)) {
                     // If no standard amounts fit, use the remaining amount
                     $amount = $remainingAmount;
@@ -43,7 +43,7 @@ class DonationSeeder extends Seeder
                     'campaign_id' => $campaign->id,
                     'user_id' => $users->random()->id,
                     'payment_method' => collect(['credit_card', 'debit_card', 'paypal', 'bank_transfer'])->random(),
-                    'transaction_id' => 'TXN_' . Str::upper(Str::random(10)),
+                    'transaction_id' => 'TXN_'.Str::upper(Str::random(10)),
                     'status' => 'completed',
                     'anonymous' => rand(1, 10) <= 2, // 20% chance of anonymous
                     'message' => rand(1, 10) <= 3 ? $this->getRandomMessage() : null, // 30% chance of message
@@ -54,14 +54,14 @@ class DonationSeeder extends Seeder
                 PaymentTransaction::create([
                     'donation_id' => $donation->id,
                     'provider' => 'mock',
-                    'external_transaction_id' => 'EXT_' . Str::upper(Str::random(12)),
+                    'external_transaction_id' => 'EXT_'.Str::upper(Str::random(12)),
                     'amount' => $amount,
                     'currency' => 'USD',
                     'status' => 'completed',
                     'response_data' => [
                         'payment_method' => $donation->payment_method,
                         'processed_at' => $donation->created_at?->toISOString() ?? now()->toISOString(),
-                        'confirmation_code' => 'CONF_' . Str::upper(Str::random(8)),
+                        'confirmation_code' => 'CONF_'.Str::upper(Str::random(8)),
                     ],
                 ]);
 

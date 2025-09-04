@@ -19,9 +19,9 @@ class DonationService
     /**
      * Create and process a donation.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
-    public function createDonation(array $data, User $donor): Donation|null
+    public function createDonation(array $data, User $donor): ?Donation
     {
         /** @var \App\Models\Campaign $campaign */
         $campaign = Campaign::findOrFail($data['campaign_id']);
@@ -71,7 +71,7 @@ class DonationService
             } catch (\Exception $e) {
                 // Mark donation as failed
                 $donation->update(['status' => 'failed']);
-                
+
                 // Log the error
                 AuditLog::createLog(
                     $donor->id,
@@ -144,7 +144,7 @@ class DonationService
         $donation->load(['campaign', 'campaign.category', 'user', 'paymentTransaction']);
 
         return [
-            'receipt_id' => 'RCP_' . $donation->id . '_' . ($donation->created_at?->format('Ymd') ?? 'Unknown'),
+            'receipt_id' => 'RCP_'.$donation->id.'_'.($donation->created_at?->format('Ymd') ?? 'Unknown'),
             'donation' => [
                 'id' => $donation->id,
                 'amount' => $donation->amount,
@@ -190,7 +190,7 @@ class DonationService
     {
         /** @var \Illuminate\Database\Eloquent\Builder<\App\Models\Donation> $donations */
         $donations = $user->donations()->where('status', 'completed');
-        
+
         return [
             'total_donations' => $donations->count(),
             'total_amount' => $donations->sum('amount'),
@@ -210,7 +210,7 @@ class DonationService
     public function getCampaignDonationStats(Campaign $campaign): array
     {
         $donations = $campaign->donations()->where('status', 'completed');
-        
+
         return [
             'total_donations' => $donations->count(),
             'total_amount' => $donations->sum('amount'),
@@ -236,16 +236,16 @@ class DonationService
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
-            
+
         return $donationsCollection->map(function (\App\Models\Donation $donation): array {
-                return [
-                    'id' => $donation->id,
-                    'amount' => $donation->amount,
-                    'donor_name' => $donation->anonymous ? 'Anonymous' : $donation->user->name,
-                    'message' => $donation->message,
-                    'created_at' => $donation->created_at,
-                ];
-            });
+            return [
+                'id' => $donation->id,
+                'amount' => $donation->amount,
+                'donor_name' => $donation->anonymous ? 'Anonymous' : $donation->user->name,
+                'message' => $donation->message,
+                'created_at' => $donation->created_at,
+            ];
+        });
     }
 
     /**
@@ -254,7 +254,7 @@ class DonationService
     public function canRefundDonation(Donation $donation, User $user): bool
     {
         // Only admins or the donor can request refunds
-        if (!$user->is_admin && $donation->user_id !== $user->id) {
+        if (! $user->is_admin && $donation->user_id !== $user->id) {
             return false;
         }
 
@@ -265,6 +265,7 @@ class DonationService
 
         // Check time limit
         $refundTimeLimit = config('payment.refund.time_limit_days', 30);
+
         return $donation->created_at?->addDays($refundTimeLimit)->isFuture() ?? false;
     }
 

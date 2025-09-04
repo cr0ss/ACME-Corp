@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Donation;
 use App\Models\Campaign;
+use App\Models\Donation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -26,7 +26,7 @@ class DonationFactory extends Factory
             'campaign_id' => Campaign::factory(),
             'user_id' => User::factory(),
             'payment_method' => $this->faker->randomElement(['credit_card', 'debit_card', 'paypal', 'bank_transfer', 'mock']),
-            'transaction_id' => 'TXN_' . $this->faker->unique()->bothify('??########'),
+            'transaction_id' => 'TXN_'.$this->faker->unique()->bothify('??########'),
             'status' => $this->faker->randomElement(['pending', 'completed', 'failed', 'refunded']),
             'anonymous' => $this->faker->boolean(20), // 20% chance of being anonymous
             'message' => $this->faker->optional(0.7)->sentence(10), // 70% chance of having a message

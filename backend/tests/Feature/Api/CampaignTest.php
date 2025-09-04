@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Api;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Campaign;
 use App\Models\CampaignCategory;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class CampaignTest extends TestCase
 {
@@ -15,7 +15,7 @@ class CampaignTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Use robust seeding method that handles database corruption
         $this->seedCampaignCategoriesIfNeeded();
     }
@@ -331,12 +331,12 @@ class CampaignTest extends TestCase
     {
         // Create unique categories for this test to avoid interference
         $category = CampaignCategory::factory()->create([
-            'name' => 'Test Category Filter ' . time(),
-            'slug' => 'test-category-filter-' . time(),
+            'name' => 'Test Category Filter '.time(),
+            'slug' => 'test-category-filter-'.time(),
         ]);
         $otherCategory = CampaignCategory::factory()->create([
-            'name' => 'Other Test Category ' . time(),
-            'slug' => 'other-test-category-' . time(),
+            'name' => 'Other Test Category '.time(),
+            'slug' => 'other-test-category-'.time(),
         ]);
 
         $user = User::factory()->create();

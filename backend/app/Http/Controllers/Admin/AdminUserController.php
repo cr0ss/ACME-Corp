@@ -38,9 +38,9 @@ class AdminUserController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search): void {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('employee_id', 'like', "%{$search}%")
-                  ->orWhere('department', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('department', 'like', "%{$search}%");
             });
         }
 
@@ -79,7 +79,7 @@ class AdminUserController extends Controller
         // Sort options
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
-        
+
         $allowedSortColumns = ['name', 'email', 'department', 'role', 'created_at'];
         if (in_array($sortBy, $allowedSortColumns)) {
             $query->orderBy($sortBy, $sortOrder);
@@ -100,6 +100,7 @@ class AdminUserController extends Controller
             $user->setAttribute('donation_count', $user->donations_count ?? 0);
             $user->setAttribute('campaign_count', $user->campaigns_count ?? 0);
             unset($user->donations); // Remove the donations collection to clean up response
+
             return $user;
         });
 
@@ -165,7 +166,7 @@ class AdminUserController extends Controller
                 $query->with(['category:id,name'])
                     ->orderBy('created_at', 'desc')
                     ->limit(5);
-            }
+            },
         ]);
 
         $user->setAttribute('total_donated', $user->donations->where('status', 'completed')->sum('amount'));
@@ -206,9 +207,9 @@ class AdminUserController extends Controller
         ]);
 
         $oldValues = $user->toArray();
-        
+
         $updateData = $request->only([
-            'name', 'email', 'employee_id', 'department', 'role', 'is_admin'
+            'name', 'email', 'employee_id', 'department', 'role', 'is_admin',
         ]);
 
         if ($request->has('password')) {
@@ -243,7 +244,7 @@ class AdminUserController extends Controller
         // Prevent deletion of the last admin
         if ($user->is_admin && User::where('is_admin', true)->count() <= 1) {
             return response()->json([
-                'message' => 'Cannot delete the last admin user'
+                'message' => 'Cannot delete the last admin user',
             ], 422);
         }
 
@@ -251,7 +252,7 @@ class AdminUserController extends Controller
         $adminUser = $request->user();
         if ($adminUser && $user->id === $adminUser->id) {
             return response()->json([
-                'message' => 'Cannot delete your own account'
+                'message' => 'Cannot delete your own account',
             ], 422);
         }
 
@@ -328,7 +329,7 @@ class AdminUserController extends Controller
 
         foreach ($users as $user) {
             $oldValues = $user->toArray();
-            
+
             switch ($action) {
                 case 'change_department':
                     $user->department = $value;
@@ -381,7 +382,7 @@ class AdminUserController extends Controller
     public function export(Request $request): \Illuminate\Http\JsonResponse
     {
         $format = $request->get('format', 'csv'); // csv, json, xlsx
-        
+
         $query = User::with(['donations' => function ($q): void {
             $q->where('status', 'completed');
         }]);
@@ -391,8 +392,8 @@ class AdminUserController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search): void {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('employee_id', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%");
             });
         }
 
@@ -433,7 +434,7 @@ class AdminUserController extends Controller
         return response()->json([
             'data' => $users,
             'format' => $format,
-            'filename' => 'users_export_' . now()->format('Y-m-d_H-i-s'),
+            'filename' => 'users_export_'.now()->format('Y-m-d_H-i-s'),
             'count' => $users->count(),
         ]);
     }

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\PaymentTransaction;
 use App\Models\Donation;
+use App\Models\PaymentTransaction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,7 +22,7 @@ class PaymentTransactionFactory extends Factory
     {
         $providers = ['mock', 'stripe', 'paypal'];
         $provider = $this->faker->randomElement($providers);
-        
+
         return [
             'donation_id' => Donation::factory(),
             'provider' => $provider,
@@ -40,10 +40,10 @@ class PaymentTransactionFactory extends Factory
     private function generateExternalTransactionId(string $provider): string
     {
         return match ($provider) {
-            'stripe' => 'ch_' . $this->faker->bothify('??????????????????'),
-            'paypal' => 'PAY-' . $this->faker->bothify('?????????????????'),
-            'mock' => 'MOCK_' . $this->faker->bothify('????????????'),
-            default => 'TXN_' . $this->faker->bothify('????????????????'),
+            'stripe' => 'ch_'.$this->faker->bothify('??????????????????'),
+            'paypal' => 'PAY-'.$this->faker->bothify('?????????????????'),
+            'mock' => 'MOCK_'.$this->faker->bothify('????????????'),
+            default => 'TXN_'.$this->faker->bothify('????????????????'),
         };
     }
 
@@ -56,7 +56,7 @@ class PaymentTransactionFactory extends Factory
     {
         return match ($provider) {
             'stripe' => [
-                'id' => 'ch_' . $this->faker->bothify('??????????????????????'),
+                'id' => 'ch_'.$this->faker->bothify('??????????????????????'),
                 'object' => 'charge',
                 'amount' => $this->faker->numberBetween(500, 100000),
                 'currency' => 'usd',
@@ -64,7 +64,7 @@ class PaymentTransactionFactory extends Factory
                 'status' => 'succeeded',
             ],
             'paypal' => [
-                'id' => 'PAY-' . $this->faker->bothify('?????????????????'),
+                'id' => 'PAY-'.$this->faker->bothify('?????????????????'),
                 'state' => 'approved',
                 'cart' => $this->faker->bothify('?????????????????'),
                 'payer' => [
@@ -73,7 +73,7 @@ class PaymentTransactionFactory extends Factory
                 ],
             ],
             'mock' => [
-                'mock_transaction_id' => 'MOCK_' . $this->faker->bothify('????????????'),
+                'mock_transaction_id' => 'MOCK_'.$this->faker->bothify('????????????'),
                 'processed_at' => now()->toISOString(),
                 'mock_status' => 'success',
             ],
@@ -118,7 +118,7 @@ class PaymentTransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'provider' => 'stripe',
-            'external_transaction_id' => 'ch_' . $this->faker->bothify('??????????????????????'),
+            'external_transaction_id' => 'ch_'.$this->faker->bothify('??????????????????????'),
             'response_data' => $this->generateResponseData('stripe'),
         ]);
     }
@@ -130,7 +130,7 @@ class PaymentTransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'provider' => 'paypal',
-            'external_transaction_id' => 'PAY-' . $this->faker->bothify('?????????????????'),
+            'external_transaction_id' => 'PAY-'.$this->faker->bothify('?????????????????'),
             'response_data' => $this->generateResponseData('paypal'),
         ]);
     }
@@ -142,7 +142,7 @@ class PaymentTransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'provider' => 'mock',
-            'external_transaction_id' => 'MOCK_' . $this->faker->bothify('????????????'),
+            'external_transaction_id' => 'MOCK_'.$this->faker->bothify('????????????'),
             'response_data' => $this->generateResponseData('mock'),
         ]);
     }

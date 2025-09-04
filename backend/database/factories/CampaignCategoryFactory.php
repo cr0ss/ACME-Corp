@@ -23,7 +23,7 @@ class CampaignCategoryFactory extends Factory
         // Generate unique names using sequences to avoid slug conflicts
         $baseName = $this->faker->randomElement([
             'Healthcare',
-            'Education', 
+            'Education',
             'Environment',
             'Community Development',
             'Poverty Alleviation',
@@ -33,11 +33,11 @@ class CampaignCategoryFactory extends Factory
             'Sports & Recreation',
             'Emergency Relief',
         ]);
-        
+
         // Add sequence number to ensure uniqueness across test runs
         $sequenceNumber = $this->faker->unique()->numberBetween(1, 99999);
-        $name = $baseName . ' ' . $sequenceNumber;
-        
+        $name = $baseName.' '.$sequenceNumber;
+
         return [
             'name' => $name,
             'slug' => Str::slug($name),

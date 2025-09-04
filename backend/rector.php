@@ -7,7 +7,7 @@ use Rector\Set\ValueObject\SetList;
 
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->paths([
-        __DIR__ . '/app',
+        __DIR__.'/app',
     ]);
 
     // Modernize to PHP 8.1+ features and add type declarations
@@ -21,8 +21,8 @@ return static function (RectorConfig $rectorConfig): void {
 
     // Skip certain files/directories if needed
     $rectorConfig->skip([
-        __DIR__ . '/vendor',
-        __DIR__ . '/storage',
-        __DIR__ . '/bootstrap',
+        __DIR__.'/vendor',
+        __DIR__.'/storage',
+        __DIR__.'/bootstrap',
     ]);
 };

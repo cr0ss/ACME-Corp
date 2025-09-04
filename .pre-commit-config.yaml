@@ -1,0 +1,96 @@
+# Pre-commit configuration for ACME CSR Platform
+# This file configures git hooks that run automatically before commits
+
+repos:
+  # Local hooks that run our project-specific commands
+  - repo: local
+    hooks:
+      # Run backend tests before commit
+      - id: backend-tests
+        name: Backend Tests
+        entry: make test
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: "Run Laravel/Pest tests to ensure code quality"
+
+      # Run PHPStan static analysis
+      - id: phpstan
+        name: PHPStan Analysis
+        entry: make phpstan
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: "Run PHPStan static analysis for code quality"
+
+      # Run frontend tests
+      - id: frontend-tests
+        name: Frontend Tests
+        entry: make npm-test
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: "Run Vue.js tests to ensure frontend quality"
+
+      # Run frontend linting
+      - id: frontend-lint
+        name: Frontend Lint
+        entry: make npm-lint
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: "Run ESLint to check frontend code quality"
+
+      # Run code formatting check
+      - id: format-check
+        name: Format Check
+        entry: make format-check
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: "Check if code is properly formatted with Laravel Pint"
+
+  # Standard pre-commit hooks for general code quality
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Prevent committing files with merge conflicts
+      - id: check-merge-conflict
+        stages: [pre-commit]
+
+      # Check for trailing whitespace
+      - id: trailing-whitespace
+        stages: [pre-commit]
+
+      # Check for end-of-file newline
+      - id: end-of-file-fixer
+        stages: [pre-commit]
+
+      # Check for large files
+      - id: check-added-large-files
+        stages: [pre-commit]
+
+      # Check for debug statements
+      - id: debug-statements
+        stages: [pre-commit]
+
+  # YAML formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types: [yaml]
+        stages: [pre-commit]
+
+  # JSON formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types: [json]
+        stages: [pre-commit]

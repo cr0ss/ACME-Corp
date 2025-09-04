@@ -62,6 +62,19 @@ seed: ## Seed the database
 # Testing & Quality Assurance
 # =============================================================================
 
+# Pre-commit hooks management
+pre-commit-install: ## Install pre-commit hooks
+	pre-commit install
+
+pre-commit-uninstall: ## Uninstall pre-commit hooks
+	pre-commit uninstall
+
+pre-commit-run: ## Run pre-commit hooks on all files
+	pre-commit run --all-files
+
+pre-commit-update: ## Update pre-commit hooks to latest versions
+	pre-commit autoupdate
+
 test: ## Run all tests (using test database)
 	docker-compose exec -T backend php artisan test --env=testing
 

@@ -2,18 +2,17 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Campaign;
 use App\Models\CampaignCategory;
 use App\Models\Donation;
+use App\Models\User;
 use App\Services\DonationService;
 use App\Services\Payment\PaymentService;
-use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class DonationEmailTest extends TestCase
 {
@@ -22,10 +21,10 @@ class DonationEmailTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Disable queue jobs for testing
         Queue::fake();
-        
+
         // Fake mail for testing
         Mail::fake();
     }
@@ -37,7 +36,7 @@ class DonationEmailTest extends TestCase
         $category = CampaignCategory::factory()->create();
         $campaignOwner = User::factory()->create();
         $donor = User::factory()->create();
-        
+
         $campaign = Campaign::factory()->create([
             'user_id' => $campaignOwner->id,
             'category_id' => $category->id,
@@ -51,8 +50,8 @@ class DonationEmailTest extends TestCase
             $mock->shouldReceive('processPayment')
                 ->andReturn(new \App\Contracts\PaymentResult(
                     success: true,
-                    transactionId: 'TXN_' . uniqid(),
-                    externalTransactionId: 'EXT_' . uniqid(),
+                    transactionId: 'TXN_'.uniqid(),
+                    externalTransactionId: 'EXT_'.uniqid(),
                     responseData: ['status' => 'succeeded']
                 ));
         });
@@ -88,7 +87,7 @@ class DonationEmailTest extends TestCase
         // Create test data
         $category = CampaignCategory::factory()->create();
         $user = User::factory()->create();
-        
+
         $campaign = Campaign::factory()->create([
             'user_id' => $user->id,
             'category_id' => $category->id,
@@ -102,8 +101,8 @@ class DonationEmailTest extends TestCase
             $mock->shouldReceive('processPayment')
                 ->andReturn(new \App\Contracts\PaymentResult(
                     success: true,
-                    transactionId: 'TXN_' . uniqid(),
-                    externalTransactionId: 'EXT_' . uniqid(),
+                    transactionId: 'TXN_'.uniqid(),
+                    externalTransactionId: 'EXT_'.uniqid(),
                     responseData: ['status' => 'succeeded']
                 ));
         });
@@ -138,7 +137,7 @@ class DonationEmailTest extends TestCase
         $category = CampaignCategory::factory()->create();
         $campaignOwner = User::factory()->create();
         $donor = User::factory()->create();
-        
+
         $campaign = Campaign::factory()->create([
             'user_id' => $campaignOwner->id,
             'category_id' => $category->id,
@@ -152,8 +151,8 @@ class DonationEmailTest extends TestCase
             $mock->shouldReceive('processPayment')
                 ->andReturn(new \App\Contracts\PaymentResult(
                     success: true,
-                    transactionId: 'TXN_' . uniqid(),
-                    externalTransactionId: 'EXT_' . uniqid(),
+                    transactionId: 'TXN_'.uniqid(),
+                    externalTransactionId: 'EXT_'.uniqid(),
                     responseData: ['status' => 'succeeded']
                 ));
         });

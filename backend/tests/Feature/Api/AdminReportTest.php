@@ -16,7 +16,7 @@ class AdminReportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Use robust seeding method that handles database corruption
         $this->seedCampaignCategoriesIfNeeded();
     }
@@ -130,7 +130,7 @@ class AdminReportTest extends TestCase
         // Create users in different departments
         $engineeringUsers = User::factory()->count(3)->create(['department' => 'Engineering']);
         $marketingUsers = User::factory()->count(2)->create(['department' => 'Marketing']);
-        
+
         $campaign = Campaign::factory()->create([
             'category_id' => $category->id,
             'user_id' => $engineeringUsers->first()->id,
@@ -315,7 +315,7 @@ class AdminReportTest extends TestCase
             ->getJson("/api/admin/reports/campaigns?start_date={$startDate}&end_date={$endDate}&category_id={$category1->id}");
 
         $response->assertOk();
-        
+
         $campaigns = $response->json('detailed_campaigns');
         foreach ($campaigns as $campaign) {
             $this->assertEquals($category1->name, $campaign['category']);

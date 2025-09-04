@@ -112,7 +112,7 @@ class AdminReportController extends Controller
                 'total_raised' => $campaigns->sum('current_amount'),
                 'avg_target' => $campaigns->avg('target_amount'),
                 'avg_raised' => $campaigns->avg('current_amount'),
-                'success_rate' => $campaigns->where('current_amount', '>=', function($campaign) {
+                'success_rate' => $campaigns->where('current_amount', '>=', function ($campaign) {
                     return $campaign->target_amount;
                 })->count() / max($campaigns->count(), 1) * 100,
             ],
@@ -139,14 +139,17 @@ class AdminReportController extends Controller
                 })->count(),
                 '25-50%' => $campaigns->filter(function ($c): bool {
                     $progress = $c->current_amount / max($c->target_amount, 1);
+
                     return $progress >= 0.25 && $progress < 0.50;
                 })->count(),
                 '50-75%' => $campaigns->filter(function ($c): bool {
                     $progress = $c->current_amount / max($c->target_amount, 1);
+
                     return $progress >= 0.50 && $progress < 0.75;
                 })->count(),
                 '75-100%' => $campaigns->filter(function ($c): bool {
                     $progress = $c->current_amount / max($c->target_amount, 1);
+
                     return $progress >= 0.75 && $progress < 1.0;
                 })->count(),
                 'Over 100%' => $campaigns->filter(function ($c): bool {
@@ -190,7 +193,7 @@ class AdminReportController extends Controller
 
         $query = User::with(['donations' => function ($q) use ($startDate, $endDate): void {
             $q->where('status', 'completed')
-              ->whereBetween('created_at', [$startDate, $endDate]);
+                ->whereBetween('created_at', [$startDate, $endDate]);
         }]);
 
         if ($department) {
@@ -299,27 +302,27 @@ class AdminReportController extends Controller
                     ->where('donations.status', 'completed')
                     ->whereBetween('donations.created_at', [$startDate, $endDate]);
             }], 'donations.amount')
-            ->withCount(['campaigns as campaigns_count' => function ($query) use ($startDate, $endDate): void {
-                $query->whereHas('donations', function ($subQuery) use ($startDate, $endDate): void {
-                    $subQuery->where('status', 'completed')
-                        ->whereBetween('created_at', [$startDate, $endDate]);
-                });
-            }])
-            ->get()
-            ->filter(function ($category): bool {
-                return ($category->total_raised ?? 0) > 0;
-            })
-            ->sortByDesc('total_raised')
-            ->map(function ($category): array {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'description' => $category->description,
-                    'total_raised' => $category->total_raised ?? 0,
-                    'campaigns_count' => $category->campaigns_count ?? 0,
-                ];
-            })
-            ->values(),
+                ->withCount(['campaigns as campaigns_count' => function ($query) use ($startDate, $endDate): void {
+                    $query->whereHas('donations', function ($subQuery) use ($startDate, $endDate): void {
+                        $subQuery->where('status', 'completed')
+                            ->whereBetween('created_at', [$startDate, $endDate]);
+                    });
+                }])
+                ->get()
+                ->filter(function ($category): bool {
+                    return ($category->total_raised ?? 0) > 0;
+                })
+                ->sortByDesc('total_raised')
+                ->map(function ($category): array {
+                    return [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'description' => $category->description,
+                        'total_raised' => $category->total_raised ?? 0,
+                        'campaigns_count' => $category->campaigns_count ?? 0,
+                    ];
+                })
+                ->values(),
             'monthly_impact' => $this->getMonthlyImpactTrends($startDate, $endDate),
             'success_stories' => Campaign::with(['category', 'user'])
                 ->whereRaw('current_amount >= target_amount')
@@ -362,7 +365,7 @@ class AdminReportController extends Controller
         $startDate = $request->get('start_date', now()->subYear());
         $endDate = $request->get('end_date', now());
 
-        $data = match($type) {
+        $data = match ($type) {
             'donations' => $this->exportDonationsData($startDate, $endDate),
             'campaigns' => $this->exportCampaignsData($startDate, $endDate),
             'users' => $this->exportUsersData($startDate, $endDate),
@@ -385,7 +388,7 @@ class AdminReportController extends Controller
                     'format' => $format,
                     'start_date' => $startDate,
                     'end_date' => $endDate,
-                    'records_count' => count($data)
+                    'records_count' => count($data),
                 ],
                 $request->ip(),
                 $request->userAgent()
@@ -396,7 +399,7 @@ class AdminReportController extends Controller
             'data' => $data,
             'type' => $type,
             'format' => $format,
-            'filename' => "{$type}_export_" . now()->format('Y-m-d_H-i-s'),
+            'filename' => "{$type}_export_".now()->format('Y-m-d_H-i-s'),
             'count' => count($data),
             'generated_at' => now()->toISOString(),
         ]);
@@ -409,7 +412,7 @@ class AdminReportController extends Controller
      */
     private function getFinancialTrends(string $startDate, string $endDate, string $groupBy): array
     {
-        $dateFormat = match($groupBy) {
+        $dateFormat = match ($groupBy) {
             'day' => 'YYYY-MM-DD',
             'week' => 'IYYY-IW',
             'quarter' => 'YYYY-Q',
@@ -417,11 +420,11 @@ class AdminReportController extends Controller
         };
 
         return Donation::select(
-                DB::raw("to_char(created_at, '{$dateFormat}') as period"),
-                DB::raw('COUNT(*) as donations_count'),
-                DB::raw('SUM(amount) as total_amount'),
-                DB::raw('AVG(amount) as avg_amount')
-            )
+            DB::raw("to_char(created_at, '{$dateFormat}') as period"),
+            DB::raw('COUNT(*) as donations_count'),
+            DB::raw('SUM(amount) as total_amount'),
+            DB::raw('AVG(amount) as avg_amount')
+        )
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
@@ -479,11 +482,11 @@ class AdminReportController extends Controller
     private function getFinancialByPaymentMethod(string $startDate, string $endDate): array
     {
         return Donation::select(
-                'payment_method',
-                DB::raw('COUNT(*) as donations_count'),
-                DB::raw('SUM(amount) as total_amount'),
-                DB::raw('AVG(amount) as avg_amount')
-            )
+            'payment_method',
+            DB::raw('COUNT(*) as donations_count'),
+            DB::raw('SUM(amount) as total_amount'),
+            DB::raw('AVG(amount) as avg_amount')
+        )
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('payment_method')
@@ -518,9 +521,9 @@ class AdminReportController extends Controller
     private function getTopDonorsInPeriod(string $startDate, string $endDate): array
     {
         return User::with(['donations' => function ($query) use ($startDate, $endDate): void {
-                $query->where('status', 'completed')
-                    ->whereBetween('created_at', [$startDate, $endDate]);
-            }])
+            $query->where('status', 'completed')
+                ->whereBetween('created_at', [$startDate, $endDate]);
+        }])
             ->whereHas('donations', function ($query) use ($startDate, $endDate): void {
                 $query->where('status', 'completed')
                     ->whereBetween('created_at', [$startDate, $endDate]);
@@ -548,12 +551,12 @@ class AdminReportController extends Controller
     private function getMonthlyImpactTrends(string $startDate, string $endDate): array
     {
         return Donation::select(
-                DB::raw('to_char(created_at, \'YYYY-MM\') as month'),
-                DB::raw('COUNT(*) as donations_count'),
-                DB::raw('SUM(amount) as total_raised'),
-                DB::raw('COUNT(DISTINCT user_id) as unique_donors'),
-                DB::raw('COUNT(DISTINCT campaign_id) as campaigns_supported')
-            )
+            DB::raw('to_char(created_at, \'YYYY-MM\') as month'),
+            DB::raw('COUNT(*) as donations_count'),
+            DB::raw('SUM(amount) as total_raised'),
+            DB::raw('COUNT(DISTINCT user_id) as unique_donors'),
+            DB::raw('COUNT(DISTINCT campaign_id) as campaigns_supported')
+        )
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('month')
@@ -568,12 +571,12 @@ class AdminReportController extends Controller
     private function getDepartmentParticipation(string $startDate, string $endDate): array
     {
         return User::select(
-                'department',
-                DB::raw('COUNT(DISTINCT users.id) as total_employees'),
-                DB::raw('COUNT(DISTINCT CASE WHEN donations.id IS NOT NULL THEN users.id END) as participants'),
-                DB::raw('COUNT(donations.id) as total_donations'),
-                DB::raw('SUM(donations.amount) as total_contributed')
-            )
+            'department',
+            DB::raw('COUNT(DISTINCT users.id) as total_employees'),
+            DB::raw('COUNT(DISTINCT CASE WHEN donations.id IS NOT NULL THEN users.id END) as participants'),
+            DB::raw('COUNT(donations.id) as total_donations'),
+            DB::raw('SUM(donations.amount) as total_contributed')
+        )
             ->leftJoin('donations', function ($join) use ($startDate, $endDate): void {
                 $join->on('users.id', '=', 'donations.user_id')
                     ->where('donations.status', 'completed')
@@ -649,9 +652,9 @@ class AdminReportController extends Controller
     private function exportUsersData(string $startDate, string $endDate): array
     {
         return User::with(['donations' => function ($query) use ($startDate, $endDate): void {
-                $query->where('status', 'completed')
-                    ->whereBetween('created_at', [$startDate, $endDate]);
-            }])
+            $query->where('status', 'completed')
+                ->whereBetween('created_at', [$startDate, $endDate]);
+        }])
             ->get()
             ->map(function ($user): array {
                 return [

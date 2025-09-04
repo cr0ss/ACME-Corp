@@ -5,7 +5,7 @@ namespace App\Contracts;
 class PaymentResult
 {
     /**
-     * @param array<string, mixed> $responseData
+     * @param  array<string, mixed>  $responseData
      */
     public function __construct(
         public readonly bool $success,

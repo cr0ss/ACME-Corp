@@ -13,18 +13,18 @@ class StripePaymentProvider implements PaymentProviderInterface
     {
         // TODO: Implement actual Stripe integration
         // This is a placeholder implementation
-        
-        if (!$this->validatePaymentData($paymentData)) {
+
+        if (! $this->validatePaymentData($paymentData)) {
             return new PaymentResult(
                 success: false,
-                transactionId: 'STRIPE_' . Str::upper(Str::random(12)),
+                transactionId: 'STRIPE_'.Str::upper(Str::random(12)),
                 errorMessage: 'Invalid payment data'
             );
         }
 
         // Placeholder for Stripe payment processing
-        $transactionId = 'pi_' . Str::lower(Str::random(24)); // Stripe payment intent format
-        
+        $transactionId = 'pi_'.Str::lower(Str::random(24)); // Stripe payment intent format
+
         return new PaymentResult(
             success: true,
             transactionId: $transactionId,
@@ -42,8 +42,8 @@ class StripePaymentProvider implements PaymentProviderInterface
     public function refundPayment(Donation $donation): PaymentResult
     {
         // TODO: Implement actual Stripe refund
-        $refundId = 're_' . Str::lower(Str::random(24));
-        
+        $refundId = 're_'.Str::lower(Str::random(24));
+
         return new PaymentResult(
             success: true,
             transactionId: $refundId,
@@ -65,7 +65,7 @@ class StripePaymentProvider implements PaymentProviderInterface
 
     public function validatePaymentData(array $paymentData): bool
     {
-        return isset($paymentData['payment_method_id']) 
+        return isset($paymentData['payment_method_id'])
             || isset($paymentData['source'])
             || isset($paymentData['token']);
     }
@@ -73,8 +73,8 @@ class StripePaymentProvider implements PaymentProviderInterface
     public function handleWebhook(array $webhookData): ?PaymentResult
     {
         // TODO: Implement Stripe webhook signature verification
-        
-        if (!isset($webhookData['type']) || !isset($webhookData['data']['object']['id'])) {
+
+        if (! isset($webhookData['type']) || ! isset($webhookData['data']['object']['id'])) {
             return null;
         }
 

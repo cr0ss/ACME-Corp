@@ -6,8 +6,8 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ProfileController;
-use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignCategoryController;
+use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Models\AuditLog;
 use App\Models\Campaign;
@@ -35,7 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
-    
+
     // Logout routes
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::post('/logout-all', [LogoutController::class, 'logoutAll']);
@@ -82,18 +82,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/campaigns', [CampaignController::class, 'adminIndex']); // Admin campaigns list with all statuses
         Route::put('/campaigns/{campaign}/featured', function (Request $request, Campaign $campaign) {
             $campaign->update(['featured' => $request->boolean('featured')]);
-            
+
             AuditLog::createLog(
                 $request->user()?->id,
                 'campaign_featured_updated',
                 'App\Models\Campaign',
                 $campaign->id,
-                ['featured' => !$request->boolean('featured')],
+                ['featured' => ! $request->boolean('featured')],
                 ['featured' => $request->boolean('featured')],
                 $request->ip(),
                 $request->userAgent()
             );
-            
+
             return response()->json($campaign);
         });
 
