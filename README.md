@@ -151,8 +151,7 @@ frontend/
 1. **Clone and Setup**
    ```bash
    git clone <repository-url>
-   cd acme-csr-platform
-   cp docker.env.example .env
+   cd ACME-Corp
    ```
 
 2. **Start All Services**
