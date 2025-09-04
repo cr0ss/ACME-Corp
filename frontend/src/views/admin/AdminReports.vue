@@ -21,11 +21,7 @@
           <option value="json">JSON</option>
           <option value="excel">Excel</option>
         </select>
-        <button
-          @click="exportData"
-          :disabled="isExporting"
-          class="btn-primary disabled:opacity-50"
-        >
+        <button @click="exportData" :disabled="isExporting" class="btn-primary disabled:opacity-50">
           {{ isExporting ? 'Exporting...' : 'Export Data' }}
         </button>
       </div>
@@ -92,7 +88,7 @@
               activeTab === tab.id
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-              'py-4 px-1 border-b-2 font-medium text-sm'
+              'py-4 px-1 border-b-2 font-medium text-sm',
             ]"
           >
             {{ tab.name }}
@@ -141,8 +137,11 @@
             <!-- Financial Trends Chart -->
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm shadow-sm mb-6">
               <h3 class="text-lg font-semibold mb-6">Donation Trends</h3>
-              <div class="h-64 flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                Chart visualization would go here (trends: {{ financialReport.trends.length }} data points)
+              <div
+                class="h-64 flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-200 rounded-lg"
+              >
+                Chart visualization would go here (trends: {{ financialReport.trends.length }} data
+                points)
               </div>
             </div>
 
@@ -198,7 +197,9 @@
                       <div class="text-sm text-gray-500">{{ campaign.category?.name }}</div>
                     </div>
                     <div class="text-right">
-                      <div class="font-bold">{{ formatCurrency(campaign.total_raised || campaign.current_amount) }}</div>
+                      <div class="font-bold">
+                        {{ formatCurrency(campaign.total_raised || campaign.current_amount) }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -301,7 +302,9 @@
                     <span class="font-medium capitalize">{{ status }}</span>
                     <div class="text-right">
                       <div class="font-bold">{{ data.count }} campaigns</div>
-                      <div class="text-sm text-gray-500">{{ formatCurrency(data.total_raised) }} raised</div>
+                      <div class="text-sm text-gray-500">
+                        {{ formatCurrency(data.total_raised) }} raised
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -318,7 +321,9 @@
                     <span class="font-medium">{{ category }}</span>
                     <div class="text-right">
                       <div class="font-bold">{{ data.count }} campaigns</div>
-                      <div class="text-sm text-gray-500">{{ formatPercentage(data.avg_progress / 100) }} avg progress</div>
+                      <div class="text-sm text-gray-500">
+                        {{ formatPercentage(data.avg_progress / 100) }} avg progress
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -372,19 +377,27 @@
               <h3 class="text-lg font-semibold mb-6">Participation Levels</h3>
               <div class="grid grid-cols-4 gap-4">
                 <div class="text-center p-4 bg-red-50 rounded-lg">
-                  <div class="text-2xl font-bold text-red-900">{{ engagementReport.participation_levels.non_participants }}</div>
+                  <div class="text-2xl font-bold text-red-900">
+                    {{ engagementReport.participation_levels.non_participants }}
+                  </div>
                   <div class="text-sm text-red-700">Non-Participants</div>
                 </div>
                 <div class="text-center p-4 bg-yellow-50 rounded-lg">
-                  <div class="text-2xl font-bold text-yellow-900">{{ engagementReport.participation_levels.light_participants }}</div>
+                  <div class="text-2xl font-bold text-yellow-900">
+                    {{ engagementReport.participation_levels.light_participants }}
+                  </div>
                   <div class="text-sm text-yellow-700">Light (1-3 donations)</div>
                 </div>
                 <div class="text-center p-4 bg-blue-50 rounded-lg">
-                  <div class="text-2xl font-bold text-blue-900">{{ engagementReport.participation_levels.moderate_participants }}</div>
+                  <div class="text-2xl font-bold text-blue-900">
+                    {{ engagementReport.participation_levels.moderate_participants }}
+                  </div>
                   <div class="text-sm text-blue-700">Moderate (4-10 donations)</div>
                 </div>
                 <div class="text-center p-4 bg-green-50 rounded-lg">
-                  <div class="text-2xl font-bold text-green-900">{{ engagementReport.participation_levels.heavy_participants }}</div>
+                  <div class="text-2xl font-bold text-green-900">
+                    {{ engagementReport.participation_levels.heavy_participants }}
+                  </div>
                   <div class="text-sm text-green-700">Heavy (10+ donations)</div>
                 </div>
               </div>
@@ -402,8 +415,12 @@
                   >
                     <span class="font-medium">{{ department }}</span>
                     <div class="text-right">
-                      <div class="font-bold">{{ formatPercentage(data.engagement_rate / 100) }}</div>
-                      <div class="text-sm text-gray-500">{{ data.active_users }}/{{ data.total_users }} users</div>
+                      <div class="font-bold">
+                        {{ formatPercentage(data.engagement_rate / 100) }}
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        {{ data.active_users }}/{{ data.total_users }} users
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -423,7 +440,9 @@
                     </div>
                     <div class="text-right">
                       <div class="font-bold">{{ formatCurrency(participant.total_donated) }}</div>
-                      <div class="text-sm text-gray-500">{{ participant.donations_count }} donations</div>
+                      <div class="text-sm text-gray-500">
+                        {{ participant.donations_count }} donations
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -479,11 +498,15 @@
                   <p class="text-sm text-green-700 mt-1">{{ story.category }}</p>
                   <div class="mt-2 flex justify-between items-center">
                     <div>
-                      <span class="text-2xl font-bold text-green-900">{{ formatPercentage(story.percentage_achieved / 100) }}</span>
+                      <span class="text-2xl font-bold text-green-900">{{
+                        formatPercentage(story.percentage_achieved / 100)
+                      }}</span>
                       <span class="text-sm text-green-700"> achieved</span>
                     </div>
                     <div class="text-right">
-                      <div class="font-bold text-green-900">{{ formatCurrency(story.final_amount) }}</div>
+                      <div class="font-bold text-green-900">
+                        {{ formatCurrency(story.final_amount) }}
+                      </div>
                       <div class="text-sm text-green-700">{{ story.donors_count }} donors</div>
                     </div>
                   </div>
@@ -504,7 +527,9 @@
                     <span class="font-medium">{{ category.name }}</span>
                     <div class="text-right">
                       <div class="font-bold">{{ formatCurrency(category.total_raised) }}</div>
-                      <div class="text-sm text-gray-500">{{ category.campaigns_count }} campaigns</div>
+                      <div class="text-sm text-gray-500">
+                        {{ category.campaigns_count }} campaigns
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -521,7 +546,9 @@
                     <span class="font-medium">{{ dept.department }}</span>
                     <div class="text-right">
                       <div class="font-bold">{{ formatCurrency(dept.total_contributed || 0) }}</div>
-                      <div class="text-sm text-gray-500">{{ dept.participants }}/{{ dept.total_employees }} employees</div>
+                      <div class="text-sm text-gray-500">
+                        {{ dept.participants }}/{{ dept.total_employees }} employees
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -536,7 +563,10 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+    <div
+      v-if="isLoading"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
+    >
       <div class="bg-white p-6 rounded-lg shadow-lg">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
         <p class="mt-4 text-gray-600">Generating reports...</p>
@@ -547,15 +577,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { 
-  reportsApi, 
-  type FinancialReport, 
-  type CampaignReport, 
-  type UserEngagementReport, 
+import {
+  reportsApi,
+  type FinancialReport,
+  type CampaignReport,
+  type UserEngagementReport,
   type ImpactReport,
-  type ReportParams 
+  type ReportParams,
 } from '@/services/api'
-import { formatCurrency, formatNumber, formatPercentage, formatSmartCurrency, formatCompactNumber } from '@/utils/formatters'
+import {
+  formatCurrency,
+  formatNumber,
+  formatPercentage,
+  formatSmartCurrency,
+  formatCompactNumber,
+} from '@/utils/formatters'
 
 // State
 const isLoading = ref(false)
@@ -582,15 +618,17 @@ const tabs = [
   { id: 'financial', name: 'Financial Analysis' },
   { id: 'campaigns', name: 'Campaign Performance' },
   { id: 'engagement', name: 'User Engagement' },
-  { id: 'impact', name: 'CSR Impact' }
+  { id: 'impact', name: 'CSR Impact' },
 ]
 
 // Computed
-const reportParams = computed((): ReportParams => ({
-  start_date: startDate.value,
-  end_date: endDate.value,
-  group_by: groupBy.value
-}))
+const reportParams = computed(
+  (): ReportParams => ({
+    start_date: startDate.value,
+    end_date: endDate.value,
+    group_by: groupBy.value,
+  }),
+)
 
 // Helper functions
 
@@ -617,14 +655,13 @@ async function loadReports() {
       reportsApi.getFinancialReport(params),
       reportsApi.getCampaignReport(params),
       reportsApi.getUserEngagementReport(params),
-      reportsApi.getImpactReport(params)
+      reportsApi.getImpactReport(params),
     ])
 
     financialReport.value = financial
     campaignReport.value = campaigns
     engagementReport.value = engagement
     impactReport.value = impact
-
   } catch (error) {
     console.error('Failed to load reports:', error)
     alert('Failed to load reports. Please try again.')
@@ -642,29 +679,29 @@ async function exportData() {
   isExporting.value = true
   try {
     const exportData = await reportsApi.exportData({
-      type: selectedExportType.value as any,
-      format: selectedExportFormat.value as any,
+          type: selectedExportType.value as string,
+    format: selectedExportFormat.value as string,
       start_date: startDate.value,
-      end_date: endDate.value
+      end_date: endDate.value,
     })
 
     // Create and download file
-    const dataStr = selectedExportFormat.value === 'json' 
-      ? JSON.stringify(exportData.data, null, 2)
-      : convertToCSV(exportData.data)
-      
-    const dataBlob = new Blob([dataStr], { 
-      type: selectedExportFormat.value === 'json' ? 'application/json' : 'text/csv' 
+    const dataStr =
+      selectedExportFormat.value === 'json'
+        ? JSON.stringify(exportData.data, null, 2)
+        : convertToCSV(exportData.data)
+
+    const dataBlob = new Blob([dataStr], {
+      type: selectedExportFormat.value === 'json' ? 'application/json' : 'text/csv',
     })
-    
+
     const url = window.URL.createObjectURL(dataBlob)
     const link = document.createElement('a')
     link.href = url
     link.download = `${exportData.filename}.${selectedExportFormat.value}`
     link.click()
-    
+
     window.URL.revokeObjectURL(url)
-    
   } catch (error) {
     console.error('Failed to export data:', error)
     alert('Failed to export data. Please try again.')
@@ -673,22 +710,22 @@ async function exportData() {
   }
 }
 
-function convertToCSV(data: any[]): string {
+  function convertToCSV(data: unknown[]): string {
   if (!data.length) return ''
-  
+
   const headers = Object.keys(data[0])
   const csvContent = [
     headers.join(','),
-    ...data.map(row => 
-      headers.map(header => {
-        const value = row[header]
-        return typeof value === 'string' && value.includes(',') 
-          ? `"${value}"` 
-          : value
-      }).join(',')
-    )
+    ...data.map((row) =>
+      headers
+        .map((header) => {
+          const value = row[header]
+          return typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+        })
+        .join(','),
+    ),
   ].join('\n')
-  
+
   return csvContent
 }
 

@@ -10,9 +10,50 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DonationController extends Controller
 {
+    /**
+     * Get user's donation statistics.
+     */
+    public function stats(Request $request)
+    {
+        $userId = $request->user()->id;
+
+        $stats = [
+            'total_donated' => Donation::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->sum('amount'),
+            'total_donations' => Donation::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->count(),
+            'campaigns_supported' => Donation::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->distinct('campaign_id')
+                ->count(),
+            'avg_donation' => Donation::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->avg('amount') ?? 0,
+            'first_donation' => Donation::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->orderBy('created_at', 'asc')
+                ->first()?->created_at,
+            'last_donation' => Donation::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->orderBy('created_at', 'desc')
+                ->first()?->created_at,
+            'pending_donations' => Donation::where('user_id', $userId)
+                ->where('status', 'pending')
+                ->count(),
+            'failed_donations' => Donation::where('user_id', $userId)
+                ->where('status', 'failed')
+                ->count(),
+        ];
+
+        return response()->json($stats);
+    }
+
     /**
      * Display a listing of user's donations.
      */
@@ -184,7 +225,7 @@ class DonationController extends Controller
             'donation_id' => $donation->id,
             'receipt_number' => 'RCP_' . $donation->id . '_' . now()->format('Ymd'),
             'amount' => $donation->amount,
-            'date' => $donation->created_at->toISOString(),
+            'date' => $donation->created_at->format('F j, Y'),
             'campaign' => [
                 'id' => $donation->campaign->id,
                 'title' => $donation->campaign->title,
@@ -196,7 +237,7 @@ class DonationController extends Controller
             ],
             'payment_method' => $donation->payment_method,
             'transaction_id' => $donation->transaction_id,
-            'issued_at' => now()->toISOString(),
+            'issued_at' => now()->format('F j, Y \a\t g:i A'),
             'organization' => [
                 'name' => 'ACME Corporation',
                 'address' => '123 Business Street, Corporate City, CC 12345',
@@ -204,7 +245,22 @@ class DonationController extends Controller
             ],
         ];
 
-        return response()->json($receipt);
+        // Generate PDF
+        try {
+            $pdf = Pdf::loadView('receipts.donation', compact('receipt'));
+            
+            // Return PDF as file download
+            return response($pdf->output())
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="receipt-' . $donation->id . '.pdf"');
+                
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate PDF receipt: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to generate receipt PDF',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -235,8 +291,8 @@ class DonationController extends Controller
             $campaign = $donation->campaign;
             $campaign->increment('current_amount', $donation->amount);
 
-            // Check if campaign target is reached
-            if ($campaign->current_amount >= $campaign->target_amount) {
+            // Check if campaign target is reached using the model attribute
+            if ($campaign->is_goal_reached) {
                 $campaign->update(['status' => 'completed']);
             }
         } else {

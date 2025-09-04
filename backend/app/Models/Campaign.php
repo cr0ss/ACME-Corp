@@ -93,6 +93,37 @@ class Campaign extends Model
         return round(($this->current_amount / $this->target_amount) * 100, 2);
     }
 
+    /**
+     * Check if the campaign goal has been reached.
+     */
+    public function getIsGoalReachedAttribute(): bool
+    {
+        return bccomp($this->current_amount, $this->target_amount, 2) >= 0;
+    }
+
+    /**
+     * Update campaign status based on current progress and dates.
+     */
+    public function updateStatus(): void
+    {
+        $now = now();
+        
+        // Check if campaign should be active
+        if ($this->start_date <= $now && $this->end_date >= $now) {
+            if ($this->status !== 'active') {
+                $this->update(['status' => 'active']);
+            }
+        }
+        // Check if campaign has ended
+        elseif ($this->end_date < $now) {
+            if ($this->is_goal_reached && $this->status !== 'completed') {
+                $this->update(['status' => 'completed']);
+            } elseif (!$this->is_goal_reached && $this->status !== 'ended') {
+                $this->update(['status' => 'ended']);
+            }
+        }
+    }
+
 
 
     /**

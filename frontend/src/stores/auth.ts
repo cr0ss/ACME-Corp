@@ -20,16 +20,17 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await authApi.login(credentials)
-      
+
       user.value = response.user
       token.value = response.token
-      
+
       // Store token in localStorage
       localStorage.setItem('auth_token', response.token)
-      
+
       return response
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Login failed'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed'
+      error.value = errorMessage
       throw err
     } finally {
       isLoading.value = false
@@ -43,7 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (token.value) {
         await authApi.logout()
       }
-    } catch (err) {
+    } catch {
       console.warn('Logout API call failed, but continuing with local logout')
     } finally {
       // Clear state regardless of API call success
@@ -63,10 +64,11 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await authApi.getUser()
       user.value = response.user
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch user'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user'
+      error.value = errorMessage
       // If token is invalid, clear it
-      if (err.response?.status === 401) {
+      if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'status' in err.response && err.response.status === 401) {
         logout()
       }
     } finally {
@@ -82,18 +84,19 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authApi.updateProfile(data)
       user.value = response.user
       return response
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to update profile'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile'
+      error.value = errorMessage
       throw err
     } finally {
       isLoading.value = false
     }
   }
 
-  async function updatePassword(data: { 
+  async function updatePassword(data: {
     current_password: string
     password: string
-    password_confirmation: string 
+    password_confirmation: string
   }) {
     isLoading.value = true
     error.value = null
@@ -101,8 +104,9 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await authApi.updatePassword(data)
       return response
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to update password'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update password'
+      error.value = errorMessage
       throw err
     } finally {
       isLoading.value = false
@@ -126,11 +130,11 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     isLoading,
     error,
-    
+
     // Getters
     isAuthenticated,
     isAdmin,
-    
+
     // Actions
     login,
     logout,

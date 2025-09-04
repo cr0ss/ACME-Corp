@@ -3,13 +3,11 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
       <div>
-      <h1 class="text-3xl font-bold text-gray-900">Campaign Management</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Campaign Management</h1>
         <p class="text-gray-600 mt-1">Manage all campaigns across the platform</p>
       </div>
       <div class="flex space-x-3">
-        <button @click="exportCampaigns" class="btn-secondary">
-          Export Data
-        </button>
+        <button @click="exportCampaigns" class="btn-secondary">Export Data</button>
         <button @click="refreshData" class="btn-primary" :disabled="isLoading">
           <span v-if="isLoading">Refreshing...</span>
           <span v-else>Refresh</span>
@@ -95,17 +93,35 @@
         <table class="min-w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-2/5">Campaign & Creator</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-1/5">Category & Metrics</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-1/5">Progress</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-1/5">Actions</th>
+              <th
+                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-2/5"
+              >
+                Campaign & Creator
+              </th>
+              <th
+                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-1/5"
+              >
+                Category & Metrics
+              </th>
+              <th
+                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-1/5"
+              >
+                Progress
+              </th>
+              <th
+                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-1/5"
+              >
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody class="bg-white">
             <tr v-if="isLoading">
               <td colspan="4" class="px-6 py-12 text-center">
                 <div class="flex flex-col items-center">
-                  <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
+                  <div
+                    class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"
+                  ></div>
                   <p class="text-gray-600 font-medium">Loading campaigns...</p>
                 </div>
               </td>
@@ -115,19 +131,25 @@
                 <div class="flex flex-col items-center">
                   <div class="text-6xl mb-4">📊</div>
                   <h3 class="text-lg font-medium text-gray-900 mb-2">No campaigns found</h3>
-                  <p class="text-gray-500">Try adjusting your filters or create your first campaign.</p>
+                  <p class="text-gray-500">
+                    Try adjusting your filters or create your first campaign.
+                  </p>
                 </div>
               </td>
             </tr>
             <template v-else v-for="campaign in paginatedCampaigns" :key="campaign.id">
               <!-- Row 1: Main Campaign Info -->
-              <tr class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors duration-150">
+              <tr
+                class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors duration-150"
+              >
                 <!-- Campaign & Creator -->
                 <td class="px-6 py-4">
                   <div class="flex items-start space-x-4">
                     <!-- Campaign Avatar -->
                     <div class="flex-shrink-0">
-                      <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                      <div
+                        class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg"
+                      >
                         {{ campaign.title.charAt(0) }}
                       </div>
                     </div>
@@ -135,14 +157,19 @@
                     <div class="flex-1 min-w-0">
                       <div class="mb-1">
                         <h3 class="text-lg font-semibold text-gray-900 truncate">
-                          <span v-if="campaign.featured" class="text-yellow-500 mr-1">⭐</span>{{ campaign.title }}
+                          <span v-if="campaign.featured" class="text-yellow-500 mr-1">⭐</span
+                          >{{ campaign.title }}
                         </h3>
                       </div>
-                      <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ campaign.description.substring(0, 120) }}...</p>
-                      
+                      <p class="text-sm text-gray-600 line-clamp-2 mb-3">
+                        {{ campaign.description.substring(0, 120) }}...
+                      </p>
+
                       <!-- Creator Info (inline) -->
                       <div class="flex items-center space-x-3">
-                        <div class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-medium text-xs">
+                        <div
+                          class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-medium text-xs"
+                        >
                           {{ campaign.user.name.charAt(0) }}
                         </div>
                         <div class="text-sm">
@@ -158,21 +185,27 @@
                 <td class="px-6 py-4">
                   <!-- Category -->
                   <div class="mb-3">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    <span
+                      class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                    >
                       <span class="mr-1.5">{{ campaign.category.icon }}</span>
                       {{ campaign.category.name }}
                     </span>
                   </div>
-                  
+
                   <!-- Target & Raised -->
                   <div class="grid grid-cols-1 gap-2">
                     <div>
                       <div class="text-xs text-gray-500">Target</div>
-                      <div class="text-lg font-bold text-gray-900">${{ campaign.target_amount.toLocaleString() }}</div>
+                      <div class="text-lg font-bold text-gray-900">
+                        ${{ campaign.target_amount.toLocaleString() }}
+                      </div>
                     </div>
                     <div>
                       <div class="text-xs text-gray-500">Raised</div>
-                      <div class="text-lg font-bold text-green-600">${{ campaign.current_amount.toLocaleString() }}</div>
+                      <div class="text-lg font-bold text-green-600">
+                        ${{ campaign.current_amount.toLocaleString() }}
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -181,14 +214,33 @@
                 <td class="px-6 py-4">
                   <div class="space-y-2">
                     <div class="flex justify-between text-sm">
-                      <span class="font-medium text-gray-900">{{ Math.round(((campaign.current_amount || 0) / (campaign.target_amount || 1)) * 100) }}%</span>
-                      <span class="text-gray-500">{{ campaign.donations_count || 0 }} donations</span>
+                      <span class="font-medium text-gray-900"
+                        >{{
+                          Math.round(
+                            ((campaign.current_amount || 0) / (campaign.target_amount || 1)) * 100,
+                          )
+                        }}%</span
+                      >
+                      <span class="text-gray-500"
+                        >{{ campaign.donations_count || 0 }} donations</span
+                      >
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-3">
                       <div
                         class="h-3 rounded-full transition-all duration-300"
-                        :class="((campaign.current_amount || 0) / (campaign.target_amount || 1)) >= 1 ? 'bg-green-500' : 'bg-blue-500'"
-                        :style="{ width: Math.min(100, ((campaign.current_amount || 0) / (campaign.target_amount || 1)) * 100) + '%' }"
+                        :class="
+                          (campaign.current_amount || 0) / (campaign.target_amount || 1) >= 1
+                            ? 'bg-green-500'
+                            : 'bg-blue-500'
+                        "
+                        :style="{
+                          width:
+                            Math.min(
+                              100,
+                              ((campaign.current_amount || 0) / (campaign.target_amount || 1)) *
+                                100,
+                            ) + '%',
+                        }"
                       ></div>
                     </div>
                   </div>
@@ -201,9 +253,24 @@
                       @click="viewCampaign(campaign)"
                       class="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      <svg
+                        class="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        ></path>
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        ></path>
                       </svg>
                       View
                     </button>
@@ -211,21 +278,35 @@
                       @click="editCampaign(campaign)"
                       class="w-full inline-flex items-center justify-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      <svg
+                        class="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        ></path>
                       </svg>
                       Edit
                     </button>
                     <button
                       @click="toggleFeatured(campaign)"
                       class="w-full inline-flex items-center justify-center px-3 py-2 border text-sm font-medium rounded-md focus:outline-none focus:ring-2"
-                      :class="campaign.featured 
-                        ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:ring-yellow-500' 
-                        : 'border-gray-300 text-gray-600 bg-white hover:bg-gray-50 focus:ring-gray-500'"
+                      :class="
+                        campaign.featured
+                          ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:ring-yellow-500'
+                          : 'border-gray-300 text-gray-600 bg-white hover:bg-gray-50 focus:ring-gray-500'
+                      "
                       :disabled="isUpdating === campaign.id"
                     >
                       <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        <path
+                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                        />
                       </svg>
                       {{ campaign.featured ? 'Unfeature' : 'Feature' }}
                     </button>
@@ -233,10 +314,24 @@
                       @click="deleteCampaign(campaign)"
                       class="w-full inline-flex items-center justify-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500"
                       :disabled="campaign.donations_count && campaign.donations_count > 0"
-                      :title="campaign.donations_count && campaign.donations_count > 0 ? 'Cannot delete campaign with donations' : 'Delete campaign'"
+                      :title="
+                        campaign.donations_count && campaign.donations_count > 0
+                          ? 'Cannot delete campaign with donations'
+                          : 'Delete campaign'
+                      "
                     >
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      <svg
+                        class="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        ></path>
                       </svg>
                       Delete
                     </button>
@@ -263,10 +358,13 @@
                       class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
                       :class="getStatusClass(campaign.status)"
                     >
-                      <span class="w-1.5 h-1.5 rounded-full mr-1" :class="getStatusDotClass(campaign.status)"></span>
+                      <span
+                        class="w-1.5 h-1.5 rounded-full mr-1"
+                        :class="getStatusDotClass(campaign.status)"
+                      ></span>
                       {{ campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1) }}
                     </span>
-                    
+
                     <!-- Quick Status Change -->
                     <select
                       :value="campaign.status"
@@ -297,10 +395,14 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t border-gray-200 bg-gray-50 rounded-lg px-6 py-4">
+      <div
+        v-if="totalPages > 1"
+        class="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t border-gray-200 bg-gray-50 rounded-lg px-6 py-4"
+      >
         <div class="text-sm text-gray-600 mb-4 sm:mb-0">
-          Showing <span class="font-medium text-gray-900">{{ serverPagination.from }}</span>-<span class="font-medium text-gray-900">{{ serverPagination.to }}</span> 
-          of <span class="font-medium text-gray-900">{{ serverPagination.total }}</span> campaigns
+          Showing <span class="font-medium text-gray-900">{{ serverPagination.from }}</span
+          >-<span class="font-medium text-gray-900">{{ serverPagination.to }}</span> of
+          <span class="font-medium text-gray-900">{{ serverPagination.total }}</span> campaigns
         </div>
         <nav class="flex items-center space-x-1">
           <button
@@ -316,9 +418,11 @@
               :key="page"
               @click="goToPage(page)"
               class="relative inline-flex items-center px-4 py-2 text-sm font-medium border focus:z-10 focus:ring-2 focus:ring-blue-500"
-              :class="page === currentPage
-                ? 'z-10 bg-blue-600 border-blue-600 text-white'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'"
+              :class="
+                page === currentPage
+                  ? 'z-10 bg-blue-600 border-blue-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              "
             >
               {{ page }}
             </button>
@@ -333,20 +437,18 @@
         </nav>
       </div>
     </div>
-
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCampaignsStore } from '@/stores/campaigns'
-import { useAuthStore } from '@/stores/auth'
+
 import { apiService } from '@/services/api'
 import type { Campaign, CampaignCategory } from '@/services/api'
 
 const campaignsStore = useCampaignsStore()
-const authStore = useAuthStore()
+
 
 // State
 const campaigns = ref<Campaign[]>([])
@@ -363,7 +465,7 @@ const serverPagination = ref({
   per_page: 10,
   total: 0,
   from: 1,
-  to: 10
+  to: 10,
 })
 
 // Campaign stats state
@@ -373,7 +475,7 @@ const campaignStats = ref({
   cancelled: 0,
   draft: 0,
   total: 0,
-  featured: 0
+  featured: 0,
 })
 
 // Filters
@@ -382,13 +484,13 @@ const filters = ref({
   status: '',
   category: '',
   featured: '',
-  sortBy: 'created_at_desc'
+  sortBy: 'created_at_desc',
 })
 
-
-
 // Computed - use real stats instead of current page data
-const totalCampaigns = computed(() => campaignStats.value.total || serverPagination.value.total || campaigns.value.length)
+const totalCampaigns = computed(
+  () => campaignStats.value.total || serverPagination.value.total || campaigns.value.length,
+)
 const activeCampaigns = computed(() => campaignStats.value.active)
 const draftCampaigns = computed(() => campaignStats.value.draft)
 const featuredCount = computed(() => campaignStats.value.featured)
@@ -415,7 +517,7 @@ async function fetchCampaigns() {
   isLoading.value = true
   try {
     // Build query parameters
-    const params: any = {
+    const params: Record<string, unknown> = {
       page: currentPage.value,
       per_page: pageSize.value,
     }
@@ -439,7 +541,7 @@ async function fetchCampaigns() {
       const parts = filters.value.sortBy.split('_')
       const order = parts[parts.length - 1] // Last part is the order (asc/desc)
       const field = parts.slice(0, -1).join('_') // Everything else is the field name
-      
+
       // Map frontend field names to backend field names
       let sortField = field
       if (field === 'amount') {
@@ -447,14 +549,14 @@ async function fetchCampaigns() {
       } else if (field === 'created') {
         sortField = 'created_at'
       }
-      
+
       params.sort_by = sortField
       params.sort_order = order || 'desc'
     }
 
     // Fetch campaigns with server-side pagination and filtering
     const response = await apiService.get('/admin/campaigns', { params })
-    
+
     if (response.data) {
       campaigns.value = response.data
       // Update server pagination state
@@ -464,7 +566,7 @@ async function fetchCampaigns() {
         per_page: response.per_page || pageSize.value,
         total: response.total || 0,
         from: response.from || 1,
-        to: response.to || 0
+        to: response.to || 0,
       }
     } else if (Array.isArray(response)) {
       campaigns.value = response
@@ -544,7 +646,7 @@ function editCampaign(campaign: Campaign) {
 async function quickStatusChange(campaign: Campaign, event: Event) {
   const target = event.target as HTMLSelectElement
   const newStatus = target.value as Campaign['status']
-  
+
   if (newStatus === campaign.status) {
     return // No change
   }
@@ -552,12 +654,12 @@ async function quickStatusChange(campaign: Campaign, event: Event) {
   isUpdating.value = campaign.id
   try {
     await campaignsStore.updateCampaign(campaign.id, {
-      status: newStatus
+      status: newStatus,
     })
-    
+
     // Update local state
     campaign.status = newStatus
-    
+
     // Refresh the data to ensure consistency
     await fetchAllCampaigns()
   } catch (error) {
@@ -573,12 +675,12 @@ async function toggleFeatured(campaign: Campaign) {
   isUpdating.value = campaign.id
   try {
     await apiService.put(`/admin/campaigns/${campaign.id}/featured`, {
-      featured: !campaign.featured
+      featured: !campaign.featured,
     })
-    
+
     // Update local state
     campaign.featured = !campaign.featured
-    
+
     // Refresh campaign stats to update the featured count in stats cards
     await fetchCampaignStats()
   } catch (error) {
@@ -588,16 +690,16 @@ async function toggleFeatured(campaign: Campaign) {
   }
 }
 
-
-
 async function deleteCampaign(campaign: Campaign) {
-  if (!confirm(`Are you sure you want to delete "${campaign.title}"? This action cannot be undone.`)) {
+  if (
+    !confirm(`Are you sure you want to delete "${campaign.title}"? This action cannot be undone.`)
+  ) {
     return
   }
 
   try {
     await campaignsStore.deleteCampaign(campaign.id)
-    campaigns.value = campaigns.value.filter(c => c.id !== campaign.id)
+    campaigns.value = campaigns.value.filter((c) => c.id !== campaign.id)
   } catch (error) {
     console.error('Failed to delete campaign:', error)
   }
@@ -605,19 +707,32 @@ async function deleteCampaign(campaign: Campaign) {
 
 function exportCampaigns() {
   const csvContent = [
-    ['ID', 'Title', 'Creator', 'Category', 'Target Amount', 'Current Amount', 'Progress %', 'Status', 'Featured', 'Created At'].join(','),
-    ...campaigns.value.map(campaign => [
-      campaign.id,
-      `"${campaign.title}"`,
-      `"${campaign.user.name}"`,
-      `"${campaign.category.name}"`,
-      campaign.target_amount,
-      campaign.current_amount,
-      Math.round(((campaign.current_amount || 0) / (campaign.target_amount || 1)) * 100) + '%',
-      campaign.status,
-      campaign.featured,
-      campaign.created_at
-    ].join(','))
+    [
+      'ID',
+      'Title',
+      'Creator',
+      'Category',
+      'Target Amount',
+      'Current Amount',
+      'Progress %',
+      'Status',
+      'Featured',
+      'Created At',
+    ].join(','),
+    ...campaigns.value.map((campaign) =>
+      [
+        campaign.id,
+        `"${campaign.title}"`,
+        `"${campaign.user.name}"`,
+        `"${campaign.category.name}"`,
+        campaign.target_amount,
+        campaign.current_amount,
+        Math.round(((campaign.current_amount || 0) / (campaign.target_amount || 1)) * 100) + '%',
+        campaign.status,
+        campaign.featured,
+        campaign.created_at,
+      ].join(','),
+    ),
   ].join('\n')
 
   const blob = new Blob([csvContent], { type: 'text/csv' })
@@ -630,11 +745,7 @@ function exportCampaigns() {
 }
 
 async function refreshData() {
-  await Promise.all([
-    fetchCampaigns(),
-    fetchCategories(),
-    fetchCampaignStats()
-  ])
+  await Promise.all([fetchCampaigns(), fetchCategories(), fetchCampaignStats()])
 }
 
 function applyFilters() {
@@ -657,10 +768,18 @@ function debouncedSearch() {
 }
 
 // Watch for filter changes to reset pagination and fetch new data
-watch(() => [filters.value.status, filters.value.category, filters.value.featured, filters.value.sortBy], () => {
-  currentPage.value = 1
-  fetchCampaigns()
-})
+watch(
+  () => [
+    filters.value.status,
+    filters.value.category,
+    filters.value.featured,
+    filters.value.sortBy,
+  ],
+  () => {
+    currentPage.value = 1
+    fetchCampaigns()
+  },
+)
 
 // Lifecycle
 onMounted(async () => {

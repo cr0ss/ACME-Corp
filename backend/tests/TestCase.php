@@ -36,9 +36,29 @@ abstract class TestCase extends BaseTestCase
 
     /**
      * Force a complete database refresh when things go wrong.
+     * This will only affect the test database due to APP_ENV=testing.
      */
     protected function forceRefreshDatabase(): void
     {
-        $this->artisan('migrate:fresh');
+        // Double-check we're in testing environment
+        if (app()->environment('testing')) {
+            $this->artisan('migrate:fresh');
+        } else {
+            throw new \Exception('Cannot refresh database outside of testing environment');
+        }
+    }
+
+    /**
+     * Ensure we're using the test database before running any tests
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Verify we're using the test database
+        $currentDb = config('database.connections.' . config('database.default') . '.database');
+        if ($currentDb !== 'acme_csr_test') {
+            throw new \Exception("Tests must run against test database 'acme_csr_test', not '{$currentDb}'");
+        }
     }
 }

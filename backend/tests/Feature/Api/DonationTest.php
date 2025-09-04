@@ -243,17 +243,11 @@ class DonationTest extends TestCase
         $donation = Donation::factory()->completed()->create(['user_id' => $user->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/donations/{$donation->id}/receipt");
+            ->get("/api/donations/{$donation->id}/receipt");
 
         $response->assertOk()
-            ->assertJsonStructure([
-                'donation_id',
-                'amount',
-                'date',
-                'campaign',
-                'donor',
-                'receipt_number',
-            ]);
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Disposition', 'attachment; filename="receipt-' . $donation->id . '.pdf"');
     }
 
     public function test_cannot_get_receipt_for_pending_donation(): void
@@ -262,9 +256,12 @@ class DonationTest extends TestCase
         $donation = Donation::factory()->pending()->create(['user_id' => $user->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/donations/{$donation->id}/receipt");
+            ->get("/api/donations/{$donation->id}/receipt");
 
-        $response->assertForbidden();
+        $response->assertForbidden()
+            ->assertJsonStructure([
+                'message'
+            ]);
     }
 
     public function test_anonymous_donation_hides_user_info(): void

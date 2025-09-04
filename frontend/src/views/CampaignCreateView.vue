@@ -6,9 +6,7 @@
         <h1 class="text-3xl font-bold text-gray-900">Create Campaign</h1>
         <p class="text-gray-600 mt-1">Start a fundraising campaign for a cause you believe in</p>
       </div>
-      <router-link to="/campaigns" class="btn-secondary">
-        Back to Campaigns
-      </router-link>
+      <router-link to="/campaigns" class="btn-secondary"> Back to Campaigns </router-link>
     </div>
 
     <!-- Campaign Creation Form -->
@@ -44,11 +42,17 @@
               :class="{ 'border-red-500': errors.category_id }"
             >
               <option value="">Select a category</option>
-              <option v-for="category in campaignsStore.categories" :key="category.id" :value="category.id">
+              <option
+                v-for="category in campaignsStore.categories"
+                :key="category.id"
+                :value="category.id"
+              >
                 {{ category.icon }} {{ category.name }}
               </option>
             </select>
-            <p v-if="errors.category_id" class="text-red-500 text-sm mt-1">{{ errors.category_id }}</p>
+            <p v-if="errors.category_id" class="text-red-500 text-sm mt-1">
+              {{ errors.category_id }}
+            </p>
           </div>
 
           <div>
@@ -66,7 +70,9 @@
               :class="{ 'border-red-500': errors.target_amount }"
               placeholder="0.00"
             />
-            <p v-if="errors.target_amount" class="text-red-500 text-sm mt-1">{{ errors.target_amount }}</p>
+            <p v-if="errors.target_amount" class="text-red-500 text-sm mt-1">
+              {{ errors.target_amount }}
+            </p>
           </div>
         </div>
 
@@ -84,7 +90,9 @@
             :class="{ 'border-red-500': errors.description }"
             placeholder="Describe your campaign, why it matters, and how the funds will be used..."
           ></textarea>
-          <p v-if="errors.description" class="text-red-500 text-sm mt-1">{{ errors.description }}</p>
+          <p v-if="errors.description" class="text-red-500 text-sm mt-1">
+            {{ errors.description }}
+          </p>
           <p class="text-sm text-gray-500 mt-1">{{ form.description.length }}/1000 characters</p>
         </div>
 
@@ -103,7 +111,9 @@
               :class="{ 'border-red-500': errors.start_date }"
               :min="today"
             />
-            <p v-if="errors.start_date" class="text-red-500 text-sm mt-1">{{ errors.start_date }}</p>
+            <p v-if="errors.start_date" class="text-red-500 text-sm mt-1">
+              {{ errors.start_date }}
+            </p>
           </div>
 
           <div>
@@ -128,15 +138,20 @@
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-blue-800">
-                Campaign Review Process
-              </h3>
+              <h3 class="text-sm font-medium text-blue-800">Campaign Review Process</h3>
               <div class="mt-2 text-sm text-blue-700">
-                <p>Your campaign will be submitted as a draft for admin review. Once approved by an administrator, it will become active and visible to all users for donations.</p>
+                <p>
+                  Your campaign will be submitted as a draft for admin review. Once approved by an
+                  administrator, it will become active and visible to all users for donations.
+                </p>
               </div>
             </div>
           </div>
@@ -162,13 +177,15 @@
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">
-                Error creating campaign
-              </h3>
+              <h3 class="text-sm font-medium text-red-800">Error creating campaign</h3>
               <div class="mt-2 text-sm text-red-700">
                 {{ submitError }}
               </div>
@@ -178,9 +195,7 @@
 
         <!-- Submit Buttons -->
         <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-          <router-link to="/campaigns" class="btn-secondary">
-            Cancel
-          </router-link>
+          <router-link to="/campaigns" class="btn-secondary"> Cancel </router-link>
           <button
             type="submit"
             :disabled="isSubmitting"
@@ -214,7 +229,7 @@ const form = ref({
   target_amount: null as number | null,
   start_date: '',
   end_date: '',
-  featured: false
+  featured: false,
 })
 
 // Form validation
@@ -238,21 +253,21 @@ const minEndDate = computed(() => {
 // Validation function
 function validateForm() {
   errors.value = {}
-  
+
   if (!form.value.title.trim()) {
     errors.value.title = 'Campaign title is required'
   } else if (form.value.title.length < 3) {
     errors.value.title = 'Campaign title must be at least 3 characters'
   }
-  
+
   if (!form.value.category_id) {
     errors.value.category_id = 'Please select a category'
   }
-  
+
   if (!form.value.target_amount || form.value.target_amount <= 0) {
     errors.value.target_amount = 'Target amount must be greater than 0'
   }
-  
+
   if (!form.value.description.trim()) {
     errors.value.description = 'Campaign description is required'
   } else if (form.value.description.length < 50) {
@@ -260,17 +275,17 @@ function validateForm() {
   } else if (form.value.description.length > 1000) {
     errors.value.description = 'Description must be less than 1000 characters'
   }
-  
+
   if (!form.value.start_date) {
     errors.value.start_date = 'Start date is required'
   }
-  
+
   if (!form.value.end_date) {
     errors.value.end_date = 'End date is required'
   } else if (form.value.start_date && form.value.end_date <= form.value.start_date) {
     errors.value.end_date = 'End date must be after start date'
   }
-  
+
   return Object.keys(errors.value).length === 0
 }
 
@@ -279,15 +294,15 @@ async function handleSubmit() {
   if (!validateForm()) {
     return
   }
-  
+
   if (!authStore.isAuthenticated) {
     submitError.value = 'You must be logged in to create a campaign'
     return
   }
-  
+
   isSubmitting.value = true
   submitError.value = ''
-  
+
   try {
     await campaignsStore.createCampaign({
       title: form.value.title.trim(),
@@ -297,12 +312,12 @@ async function handleSubmit() {
       start_date: form.value.start_date,
       end_date: form.value.end_date,
       featured: form.value.featured,
-      status: 'draft' // Start as draft, can be activated later
+      status: 'draft', // Start as draft, can be activated later
     })
-    
+
     // Success - redirect to campaigns list
     router.push('/campaigns')
-  } catch (error: any) {
+  } catch (error: unknown) {
     submitError.value = error.message || 'Failed to create campaign'
   } finally {
     isSubmitting.value = false
@@ -315,7 +330,7 @@ onMounted(async () => {
   if (campaignsStore.categories.length === 0) {
     await campaignsStore.fetchCategories()
   }
-  
+
   // Set default dates
   form.value.start_date = today.value
   const defaultEndDate = new Date()

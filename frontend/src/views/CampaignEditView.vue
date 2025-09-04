@@ -10,9 +10,7 @@
         <router-link :to="`/campaigns/${campaignId}`" class="btn-secondary">
           View Campaign
         </router-link>
-        <router-link to="/my-campaigns" class="btn-secondary">
-          Back to My Campaigns
-        </router-link>
+        <router-link to="/my-campaigns" class="btn-secondary"> Back to My Campaigns </router-link>
       </div>
     </div>
 
@@ -24,8 +22,18 @@
 
     <!-- Access Denied -->
     <div v-else-if="accessDenied" class="card text-center py-8">
-      <svg class="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      <svg
+        class="mx-auto h-12 w-12 text-red-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+        />
       </svg>
       <h3 class="text-lg font-medium text-gray-900 mt-2">Access Denied</h3>
       <p class="text-gray-600 mt-1">You can only edit campaigns that you created.</p>
@@ -67,11 +75,17 @@
               :class="{ 'border-red-500': errors.category_id }"
             >
               <option value="">Select a category</option>
-              <option v-for="category in campaignsStore.categories" :key="category.id" :value="category.id">
+              <option
+                v-for="category in campaignsStore.categories"
+                :key="category.id"
+                :value="category.id"
+              >
                 {{ category.icon }} {{ category.name }}
               </option>
             </select>
-            <p v-if="errors.category_id" class="text-red-500 text-sm mt-1">{{ errors.category_id }}</p>
+            <p v-if="errors.category_id" class="text-red-500 text-sm mt-1">
+              {{ errors.category_id }}
+            </p>
           </div>
 
           <div>
@@ -89,9 +103,16 @@
               :class="{ 'border-red-500': errors.target_amount }"
               placeholder="0.00"
             />
-            <p v-if="errors.target_amount" class="text-red-500 text-sm mt-1">{{ errors.target_amount }}</p>
-            <p v-if="form.target_amount && campaign && form.target_amount < campaign.current_amount" class="text-amber-600 text-sm mt-1">
-              Warning: Target amount is less than current raised amount (${{ campaign.current_amount.toLocaleString() }})
+            <p v-if="errors.target_amount" class="text-red-500 text-sm mt-1">
+              {{ errors.target_amount }}
+            </p>
+            <p
+              v-if="form.target_amount && campaign && form.target_amount < campaign.current_amount"
+              class="text-amber-600 text-sm mt-1"
+            >
+              Warning: Target amount is less than current raised amount (${{
+                campaign.current_amount.toLocaleString()
+              }})
             </p>
           </div>
         </div>
@@ -110,7 +131,9 @@
             :class="{ 'border-red-500': errors.description }"
             placeholder="Describe your campaign, why it matters, and how the funds will be used..."
           ></textarea>
-          <p v-if="errors.description" class="text-red-500 text-sm mt-1">{{ errors.description }}</p>
+          <p v-if="errors.description" class="text-red-500 text-sm mt-1">
+            {{ errors.description }}
+          </p>
           <p class="text-sm text-gray-500 mt-1">{{ form.description.length }}/1000 characters</p>
         </div>
 
@@ -129,8 +152,13 @@
               :class="{ 'border-red-500': errors.start_date }"
               :disabled="campaign?.status === 'active' && isPastDate(campaign.start_date)"
             />
-            <p v-if="errors.start_date" class="text-red-500 text-sm mt-1">{{ errors.start_date }}</p>
-            <p v-if="campaign?.status === 'active' && isPastDate(campaign.start_date)" class="text-gray-500 text-sm mt-1">
+            <p v-if="errors.start_date" class="text-red-500 text-sm mt-1">
+              {{ errors.start_date }}
+            </p>
+            <p
+              v-if="campaign?.status === 'active' && isPastDate(campaign.start_date)"
+              class="text-gray-500 text-sm mt-1"
+            >
               Cannot modify start date of active campaign that has already started
             </p>
           </div>
@@ -157,27 +185,27 @@
           <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
             Campaign Status (Admin Only)
           </label>
-          <select
-            id="status"
-            v-model="form.status"
-            class="input-field"
-          >
+          <select id="status" v-model="form.status" class="input-field">
             <option value="draft">Draft</option>
             <option value="active">Active</option>
             <option value="completed" :disabled="!isEligibleForCompletion">Completed</option>
           </select>
           <p class="text-sm text-gray-500 mt-1">
-            <span v-if="form.status === 'draft'">Draft campaigns are not visible to other users</span>
-            <span v-else-if="form.status === 'active'">Active campaigns are live and accepting donations</span>
-            <span v-else-if="form.status === 'completed'">Completed campaigns have reached their goal or ended</span>
+            <span v-if="form.status === 'draft'"
+              >Draft campaigns are not visible to other users</span
+            >
+            <span v-else-if="form.status === 'active'"
+              >Active campaigns are live and accepting donations</span
+            >
+            <span v-else-if="form.status === 'completed'"
+              >Completed campaigns have reached their goal or ended</span
+            >
           </p>
         </div>
 
         <!-- Status Display for Regular Users -->
         <div v-else>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Campaign Status
-          </label>
+          <label class="block text-sm font-medium text-gray-700 mb-1"> Campaign Status </label>
           <div class="input-field bg-gray-50 cursor-not-allowed">
             <span
               class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -187,7 +215,8 @@
             </span>
           </div>
           <p class="text-sm text-gray-500 mt-1">
-            Campaign status can only be changed by administrators. Contact an admin to activate your campaign.
+            Campaign status can only be changed by administrators. Contact an admin to activate your
+            campaign.
           </p>
         </div>
 
@@ -211,19 +240,27 @@
           <h3 class="text-sm font-medium text-gray-900 mb-3">Campaign Statistics</h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <div class="text-2xl font-bold text-blue-600">${{ campaign.current_amount.toLocaleString() }}</div>
+              <div class="text-2xl font-bold text-blue-600">
+                ${{ campaign.current_amount.toLocaleString() }}
+              </div>
               <div class="text-xs text-gray-500">Raised</div>
             </div>
             <div>
-              <div class="text-2xl font-bold text-green-600">{{ campaign.progress_percentage }}%</div>
+              <div class="text-2xl font-bold text-green-600">
+                {{ campaign.progress_percentage }}%
+              </div>
               <div class="text-xs text-gray-500">Progress</div>
             </div>
             <div>
-              <div class="text-2xl font-bold text-purple-600">{{ campaign.donations_count || 0 }}</div>
+              <div class="text-2xl font-bold text-purple-600">
+                {{ campaign.donations_count || 0 }}
+              </div>
               <div class="text-xs text-gray-500">Donations</div>
             </div>
             <div>
-              <div class="text-2xl font-bold text-gray-600">{{ daysBetween(campaign.start_date, campaign.end_date) }}</div>
+              <div class="text-2xl font-bold text-gray-600">
+                {{ daysBetween(campaign.start_date, campaign.end_date) }}
+              </div>
               <div class="text-xs text-gray-500">Total Days</div>
             </div>
           </div>
@@ -234,13 +271,15 @@
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">
-                Error updating campaign
-              </h3>
+              <h3 class="text-sm font-medium text-red-800">Error updating campaign</h3>
               <div class="mt-2 text-sm text-red-700">
                 {{ submitError }}
               </div>
@@ -250,9 +289,7 @@
 
         <!-- Submit Buttons -->
         <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-          <router-link to="/my-campaigns" class="btn-secondary">
-            Cancel
-          </router-link>
+          <router-link to="/my-campaigns" class="btn-secondary"> Cancel </router-link>
           <button
             type="submit"
             :disabled="isSubmitting"
@@ -299,7 +336,7 @@ const form = ref({
   start_date: '',
   end_date: '',
   featured: false,
-  status: 'draft'
+  status: 'draft',
 })
 
 // Form validation
@@ -319,9 +356,9 @@ const minEndDate = computed(() => {
 })
 
 const isEligibleForCompletion = computed(() => {
-  return campaign.value && (
-    campaign.value.progress_percentage >= 100 ||
-    new Date(campaign.value.end_date) < new Date()
+  return (
+    campaign.value &&
+    (campaign.value.progress_percentage >= 100 || new Date(campaign.value.end_date) < new Date())
   )
 })
 
@@ -374,7 +411,7 @@ async function loadCampaign() {
       start_date: campaign.value.start_date,
       end_date: campaign.value.end_date,
       featured: campaign.value.featured,
-      status: campaign.value.status
+      status: campaign.value.status,
     }
   } catch (error) {
     console.error('Failed to load campaign:', error)
@@ -387,21 +424,21 @@ async function loadCampaign() {
 // Validation function
 function validateForm() {
   errors.value = {}
-  
+
   if (!form.value.title.trim()) {
     errors.value.title = 'Campaign title is required'
   } else if (form.value.title.length < 3) {
     errors.value.title = 'Campaign title must be at least 3 characters'
   }
-  
+
   if (!form.value.category_id) {
     errors.value.category_id = 'Please select a category'
   }
-  
+
   if (!form.value.target_amount || form.value.target_amount <= 0) {
     errors.value.target_amount = 'Target amount must be greater than 0'
   }
-  
+
   if (!form.value.description.trim()) {
     errors.value.description = 'Campaign description is required'
   } else if (form.value.description.length < 50) {
@@ -409,17 +446,17 @@ function validateForm() {
   } else if (form.value.description.length > 1000) {
     errors.value.description = 'Description must be less than 1000 characters'
   }
-  
+
   if (!form.value.start_date) {
     errors.value.start_date = 'Start date is required'
   }
-  
+
   if (!form.value.end_date) {
     errors.value.end_date = 'End date is required'
   } else if (form.value.start_date && form.value.end_date <= form.value.start_date) {
     errors.value.end_date = 'End date must be after start date'
   }
-  
+
   return Object.keys(errors.value).length === 0
 }
 
@@ -428,17 +465,17 @@ async function handleSubmit() {
   if (!validateForm()) {
     return
   }
-  
+
   if (!authStore.isAuthenticated || !campaign.value) {
     submitError.value = 'Unable to update campaign'
     return
   }
-  
+
   isSubmitting.value = true
   submitError.value = ''
-  
+
   try {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       title: form.value.title.trim(),
       description: form.value.description.trim(),
       category_id: parseInt(form.value.category_id),
@@ -447,17 +484,17 @@ async function handleSubmit() {
       end_date: form.value.end_date,
       featured: form.value.featured,
     }
-    
+
     // Only include status if user is admin
     if (authStore.user?.is_admin) {
       updateData.status = form.value.status
     }
-    
+
     await campaignsStore.updateCampaign(campaignId.value, updateData)
-    
+
     // Success - redirect to my campaigns
     router.push('/my-campaigns')
-  } catch (error: any) {
+  } catch (error: unknown) {
     submitError.value = error.message || 'Failed to update campaign'
   } finally {
     isSubmitting.value = false
@@ -470,7 +507,7 @@ onMounted(async () => {
   if (campaignsStore.categories.length === 0) {
     await campaignsStore.fetchCategories()
   }
-  
+
   await loadCampaign()
 })
 </script>
