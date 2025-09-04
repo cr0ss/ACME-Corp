@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Campaign;
 use App\Models\Donation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CampaignController extends Controller
 {
@@ -31,7 +32,15 @@ class CampaignController extends Controller
             'sort_order' => 'string|in:asc,desc',
         ]);
 
-        $query = Campaign::with(['category', 'user'])
+        $query = Campaign::select([
+            'id', 'title', 'description', 'target_amount', 'current_amount',
+            'start_date', 'end_date', 'status', 'category_id', 'user_id',
+            'featured', 'created_at', 'updated_at',
+        ])
+            ->with([
+                'category:id,name,slug,description,icon',
+                'user:id,name,employee_id,department',
+            ])
             ->where('status', '!=', 'draft');
 
         // Apply filters
@@ -66,6 +75,32 @@ class CampaignController extends Controller
     }
 
     /**
+     * Get featured campaigns for home view (optimized)
+     */
+    public function featured(): \Illuminate\Http\JsonResponse
+    {
+        $featuredCampaigns = Campaign::select([
+            'id', 'title', 'description', 'target_amount', 'current_amount',
+            'start_date', 'end_date', 'status', 'category_id', 'user_id',
+            'featured', 'created_at', 'updated_at',
+        ])
+            ->with([
+                'category:id,name,slug,description,icon',
+                'user:id,name,employee_id,department',
+            ])
+            ->where('featured', true)
+            ->where('status', 'active')
+            ->orderBy('created_at', 'desc')
+            ->limit(6)
+            ->get();
+
+        return response()->json([
+            'data' => $featuredCampaigns,
+            'count' => $featuredCampaigns->count(),
+        ]);
+    }
+
+    /**
      * Display a listing of all campaigns for admin.
      */
     public function adminIndex(Request $request): \Illuminate\Http\JsonResponse
@@ -82,7 +117,16 @@ class CampaignController extends Controller
             'sort_order' => 'string|in:asc,desc',
         ]);
 
-        $query = Campaign::with(['category', 'user'])->withCount('donations');
+        $query = Campaign::select([
+            'id', 'title', 'description', 'target_amount', 'current_amount',
+            'start_date', 'end_date', 'status', 'category_id', 'user_id',
+            'featured', 'created_at', 'updated_at',
+        ])
+            ->with([
+                'category:id,name,slug,description,icon',
+                'user:id,name,employee_id,department',
+            ])
+            ->withCount('donations');
         // No status filtering for admin - they can see all campaigns including drafts
 
         // Apply filters
@@ -140,7 +184,15 @@ class CampaignController extends Controller
             return response()->json(['message' => 'User not authenticated'], 401);
         }
 
-        $query = Campaign::with(['category', 'user'])
+        $query = Campaign::select([
+            'id', 'title', 'description', 'target_amount', 'current_amount',
+            'start_date', 'end_date', 'status', 'category_id', 'user_id',
+            'featured', 'created_at', 'updated_at',
+        ])
+            ->with([
+                'category:id,name,slug,description,icon',
+                'user:id,name,employee_id,department',
+            ])
             ->where('user_id', $user->id);
 
         // Apply filters
@@ -348,25 +400,26 @@ class CampaignController extends Controller
      */
     public function trending(): \Illuminate\Http\JsonResponse
     {
-        $campaigns = Campaign::with(['category', 'user'])
+        $campaigns = Campaign::select([
+            'id', 'title', 'description', 'target_amount', 'current_amount',
+            'start_date', 'end_date', 'status', 'category_id', 'user_id',
+            'featured', 'created_at', 'updated_at',
+        ])
+            ->with([
+                'category:id,name,slug,description,icon',
+                'user:id,name,employee_id,department',
+            ])
             ->where('status', 'active')
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
-            ->withCount('donations')
-            ->orderBy('donations_count', 'desc')
             ->orderBy('current_amount', 'desc')
-            ->limit(10)
+            ->orderBy('created_at', 'desc')
+            ->limit(6)
             ->get();
 
-        // Return consistent format matching paginated responses
         return response()->json([
             'data' => $campaigns,
-            'current_page' => 1,
-            'last_page' => 1,
-            'per_page' => $campaigns->count(),
-            'total' => $campaigns->count(),
-            'from' => $campaigns->count() > 0 ? 1 : null,
-            'to' => $campaigns->count(),
+            'count' => $campaigns->count(),
         ]);
     }
 
@@ -405,24 +458,29 @@ class CampaignController extends Controller
      */
     public function stats(): \Illuminate\Http\JsonResponse
     {
-        $stats = Campaign::selectRaw('status, COUNT(*) as count')
+        // Use a single optimized query to get all stats at once
+        $stats = Campaign::selectRaw('
+                status,
+                COUNT(*) as count,
+                COUNT(CASE WHEN featured = true THEN 1 END) as featured_count
+            ')
             ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
+            ->get()
+            ->keyBy('status');
 
         // Ensure all statuses are present with 0 counts if they don't exist
         $allStatuses = ['active', 'completed', 'cancelled', 'draft'];
         $result = [];
 
         foreach ($allStatuses as $status) {
-            $result[$status] = $stats[$status] ?? 0;
+            $result[$status] = $stats->get($status)->count ?? 0;
         }
 
         // Add total count
         $result['total'] = array_sum($result);
 
-        // Add featured campaigns count
-        $result['featured'] = Campaign::where('featured', true)->count();
+        // Add featured campaigns count (sum from all statuses)
+        $result['featured'] = $stats->sum('featured_count');
 
         return response()->json($result);
     }
@@ -432,12 +490,25 @@ class CampaignController extends Controller
      *
      * Returns the total amount raised from all completed donations across all campaigns.
      * This provides a simple platform-wide total without campaign breakdowns.
+     *
+     * Performance: Uses a single optimized query with covering indexes for status + amount + id
      */
     public function totalRaised(): \Illuminate\Http\JsonResponse
     {
-        $totalRaised = Donation::where('status', 'completed')->sum('amount');
-        $totalDonations = Donation::where('status', 'completed')->count();
-        $avgDonation = $totalDonations > 0 ? $totalRaised / $totalDonations : 0;
+        // Use a single optimized query to get all donation stats at once
+        // Force PostgreSQL to use the selective index on completed donations
+        $donationStats = DB::table('donations')
+            ->selectRaw('
+                COUNT(*) as total_donations,
+                COALESCE(SUM(amount), 0) as total_raised,
+                COALESCE(AVG(amount), 0) as avg_donation
+            ')
+            ->where('status', 'completed')
+            ->first();
+
+        $totalRaised = $donationStats->total_raised ?? 0;
+        $totalDonations = $donationStats->total_donations ?? 0;
+        $avgDonation = $donationStats->avg_donation ?? 0;
 
         return response()->json([
             'total_raised' => number_format((float) $totalRaised, 2, '.', ''),

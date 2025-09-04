@@ -157,6 +157,15 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     }
   }
 
+  async function fetchFeaturedCampaigns() {
+    try {
+      const response = await campaignsApi.getFeatured()
+      campaigns.value = response.data // Store featured campaigns in main campaigns array
+    } catch (err: unknown) {
+      console.warn('Failed to fetch featured campaigns:', err)
+    }
+  }
+
   async function fetchTrendingCampaigns() {
     try {
       const response = await campaignsApi.getTrending()
@@ -246,6 +255,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     createCampaign,
     updateCampaign,
     deleteCampaign,
+    fetchFeaturedCampaigns,
     fetchTrendingCampaigns,
     fetchEndingSoonCampaigns,
     fetchCategories,

@@ -36,6 +36,10 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         intl \
         opcache
 
+# Install APCu for user data caching
+RUN pecl install apcu \
+    && docker-php-ext-enable apcu
+
 # Install Redis extension
 RUN pecl install redis \
     && docker-php-ext-enable redis
@@ -52,9 +56,6 @@ FROM base AS development
 # Install Xdebug for development
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
-
-# Copy custom PHP configuration
-COPY docker/php/development.ini /usr/local/etc/php/conf.d/
 
 # Copy composer files
 COPY composer.json composer.lock ./
@@ -109,9 +110,6 @@ ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Production stage
 FROM base AS production
-
-# Copy optimized PHP configuration
-COPY docker/php/production.ini /usr/local/etc/php/conf.d/
 
 # Copy composer files
 COPY composer.json composer.lock ./

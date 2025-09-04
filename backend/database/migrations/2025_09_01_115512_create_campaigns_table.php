@@ -25,10 +25,21 @@ return new class extends Migration
             $table->boolean('featured')->default(false);
             $table->timestamps();
 
+            // Basic indexes
             $table->index(['status', 'featured']);
             $table->index(['start_date', 'end_date']);
             $table->index('category_id');
             $table->index('user_id');
+
+            // Composite indexes for common query patterns
+            $table->index(['status', 'category_id', 'featured']);
+            $table->index(['status', 'start_date', 'end_date']);
+            $table->index(['category_id', 'status', 'created_at']);
+            $table->index(['user_id', 'status', 'created_at']);
+
+            // Text search optimization (for PostgreSQL)
+            $table->index(['title', 'status']);
+            $table->index(['description', 'status']);
         });
     }
 

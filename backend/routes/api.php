@@ -21,6 +21,7 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::get('/campaigns', [CampaignController::class, 'index']);
 Route::get('/campaigns/stats', [CampaignController::class, 'stats']);
 Route::get('/campaigns/total-raised', [CampaignController::class, 'totalRaised']);
+Route::get('/campaigns/home/featured', [CampaignController::class, 'featured']);
 Route::get('/campaigns/trending', [CampaignController::class, 'trending']);
 Route::get('/campaigns/ending-soon', [CampaignController::class, 'endingSoon']);
 Route::get('/campaigns/{campaign}', [CampaignController::class, 'show']);
