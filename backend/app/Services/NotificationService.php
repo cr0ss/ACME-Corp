@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Donation;
 use App\Models\User;
 use App\Models\Campaign;
+use App\Mail\DonationConfirmationMail;
+use App\Mail\NewDonationMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -18,17 +20,15 @@ class NotificationService
         try {
             $donation->load(['campaign', 'user']);
             
-            // TODO: Implement actual email sending
-            // For now, just log the notification
+            // Send the actual email
+            Mail::to($donation->user->email)->send(new \App\Mail\DonationConfirmationMail($donation));
+            
             Log::info('Donation confirmation email sent', [
                 'donation_id' => $donation->id,
                 'donor_email' => $donation->user->email,
                 'amount' => $donation->amount,
                 'campaign' => $donation->campaign->title,
             ]);
-
-            // In a real implementation, you would use Laravel's Mail facade:
-            // Mail::to($donation->user->email)->send(new DonationConfirmationMail($donation));
             
         } catch (\Exception $e) {
             Log::error('Failed to send donation confirmation email', [
@@ -51,6 +51,9 @@ class NotificationService
                 return;
             }
 
+            // Send the actual email
+            Mail::to($donation->campaign->user->email)->send(new \App\Mail\NewDonationMail($donation));
+
             Log::info('Campaign owner notification sent', [
                 'donation_id' => $donation->id,
                 'campaign_owner_email' => $donation->campaign->user->email,
@@ -58,9 +61,6 @@ class NotificationService
                 'amount' => $donation->amount,
                 'campaign' => $donation->campaign->title,
             ]);
-
-            // In a real implementation:
-            // Mail::to($donation->campaign->user->email)->send(new NewDonationMail($donation));
             
         } catch (\Exception $e) {
             Log::error('Failed to send campaign owner notification', [

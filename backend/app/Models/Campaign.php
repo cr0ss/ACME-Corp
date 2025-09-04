@@ -98,7 +98,7 @@ class Campaign extends Model
      */
     public function getIsGoalReachedAttribute(): bool
     {
-        return bccomp($this->current_amount, $this->target_amount, 2) >= 0;
+        return bccomp((string) $this->current_amount, (string) $this->target_amount, 2) >= 0;
     }
 
     /**

@@ -2,6 +2,8 @@
 # =====================================
 # This Makefile provides convenient shortcuts for common development tasks.
 # All commands run inside Docker containers for consistency.
+# Note: All docker-compose exec commands use -T flag for non-interactive execution
+# to ensure compatibility with CI/CD, git hooks, and automated scripts.
 
 .PHONY: help up down restart logs shell
 
@@ -38,76 +40,76 @@ logs-frontend: ## Show logs from frontend service only
 # =============================================================================
 
 shell: ## Open shell in backend container
-	docker-compose exec backend bash
+	docker-compose exec -T backend bash
 
 artisan: ## Run artisan command (usage: make artisan cmd="migrate")
-	docker-compose exec backend php artisan $(cmd)
+	docker-compose exec -T backend php artisan $(cmd)
 
 # Database Commands
 migrate: ## Run database migrations
-	docker-compose exec backend php artisan migrate
+	docker-compose exec -T backend php artisan migrate
 
 migrate-fresh: ## Drop all tables and re-run migrations
-	docker-compose exec backend php artisan migrate:fresh
+	docker-compose exec -T backend php artisan migrate:fresh
 
 migrate-seed: ## Run migrations and seed database
-	docker-compose exec backend php artisan migrate:fresh --seed
+	docker-compose exec -T backend php artisan migrate:fresh --seed
 
 seed: ## Seed the database
-	docker-compose exec backend php artisan db:seed
+	docker-compose exec -T backend php artisan db:seed
 
 # =============================================================================
 # Testing & Quality Assurance
 # =============================================================================
 
 test: ## Run all tests (using test database)
-	docker-compose exec backend sh scripts/run-tests.sh
+	docker-compose exec -T backend php artisan test
 
 test-unit: ## Run unit tests only (using test database)
-	docker-compose exec backend sh scripts/run-tests.sh --testsuite=Unit
+	docker-compose exec -T backend php artisan test --testsuite=Unit
 
 test-feature: ## Run feature tests only (using test database)
-	docker-compose exec backend sh scripts/run-tests.sh --testsuite=Feature
+	docker-compose exec -T backend php artisan test --testsuite=Feature
 
 test-filter: ## Run specific test (usage: make test-filter filter="AdminTest")
-	docker-compose exec backend sh scripts/run-tests.sh --filter=$(filter)
+	docker-compose exec -T backend php artisan test --filter=$(filter)
 
 test-coverage: ## Run tests with coverage report (using test database)
-	docker-compose exec backend sh scripts/run-tests.sh --coverage
+	docker-compose exec -T backend php artisan test --coverage
 
 # Static Analysis
 phpstan: ## Run PHPStan static analysis
-	docker-compose exec backend ./vendor/bin/phpstan analyse
+	docker-compose exec -T backend ./vendor/bin/phpstan analyse
 
 phpstan-baseline: ## Generate PHPStan baseline
-	docker-compose exec backend ./vendor/bin/phpstan analyse --generate-baseline
+	docker-compose exec -T backend ./vendor/bin/phpstan analyse --generate-baseline
 
 # Code Formatting
 format: ## Format code with Laravel Pint
-	docker-compose exec backend ./vendor/bin/pint
+	docker-compose exec -T backend ./vendor/bin/pint
 
 format-check: ## Check code formatting without making changes
-	docker-compose exec backend ./vendor/bin/pint --test
+	docker-compose exec -T backend ./vendor/bin/pint --test
 
 # Security
 security: ## Run security checks
-	docker-compose exec backend php artisan audit:security
+	docker-compose exec -T backend php artisan audit:security
 
 # =============================================================================
 # Cache Management
 # =============================================================================
 
 cache-clear: ## Clear all caches
-	docker-compose exec backend php artisan cache:clear
+	docker-compose exec -T backend php artisan cache:clear
 
 config-clear: ## Clear configuration cache
-	docker-compose exec backend php artisan config:clear
+	docker-compose exec -T backend php artisan config:clear
 
 route-clear: ## Clear route cache
-	docker-compose exec backend php artisan route:clear
+	docker-compose exec -T backend php artisan route:clear
 
 view-clear: ## Clear view cache
-	docker-compose exec backend php artisan view:clear
+	docker-compose exec -T backend php artisan view:clear
 
 clear-all: config-clear route-clear view-clear cache-clear ## Clear all caches
 
@@ -116,34 +118,34 @@ clear-all: config-clear route-clear view-clear cache-clear ## Clear all caches
 # =============================================================================
 
 frontend-shell: ## Open shell in frontend container
-	docker-compose exec frontend sh
+	docker-compose exec -T frontend sh
 
 npm: ## Run npm command (usage: make npm cmd="install")
-	docker-compose exec frontend npm $(cmd)
+	docker-compose exec -T frontend npm $(cmd)
 
 npm-install: ## Install frontend dependencies
-	docker-compose exec frontend npm install
+	docker-compose exec -T frontend npm install
 
 npm-dev: ## Run frontend in development mode
-	docker-compose exec frontend npm run dev
+	docker-compose exec -T frontend npm run dev
 
 npm-build: ## Build frontend for production
-	docker-compose exec frontend npm run build
+	docker-compose exec -T frontend npm run build
 
 npm-test: ## Run frontend tests (run once and exit)
-	docker-compose exec frontend npm run test:unit -- --run
+	docker-compose exec -T frontend npm run test:unit -- --run
 
 npm-test-watch: ## Run frontend tests in watch mode
-	docker-compose exec frontend npm run test:unit
+	docker-compose exec -T frontend npm run test:unit
 
 npm-test-coverage: ## Run frontend tests with coverage
-	docker-compose exec frontend npm run test:unit -- --run --coverage
+	docker-compose exec -T frontend npm run test:unit -- --run --coverage
 
 npm-lint: ## Run frontend linting
-	docker-compose exec frontend npm run lint
+	docker-compose exec -T frontend npm run lint
 
 npm-format: ## Format frontend code
-	docker-compose exec frontend npm run format
+	docker-compose exec -T frontend npm run format
 
 # =============================================================================
 # Development Workflow
@@ -184,7 +186,7 @@ db-reset: ## Reset database (fresh migration + seed)
 	@echo "🗄️ Database reset complete!"
 
 db-backup: ## Create database backup
-	docker-compose exec postgres pg_dump -U acme_user acme_csr_platform > backup_$(shell date +%Y%m%d_%H%M%S).sql
+	docker-compose exec -T postgres pg_dump -U acme_user acme_csr_platform > backup_$(shell date +%Y%m%d_%H%M%S).sql
 	@echo "💾 Database backup created!"
 
 # =============================================================================
@@ -192,7 +194,7 @@ db-backup: ## Create database backup
 # =============================================================================
 
 tail-backend: ## Tail backend application logs
-	docker-compose exec backend tail -f storage/logs/laravel.log
+	docker-compose exec -T backend tail -f storage/logs/laravel.log
 
 tail-nginx: ## Tail nginx access logs
 	docker-compose logs -f nginx
