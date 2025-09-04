@@ -2,10 +2,8 @@
 # =====================================
 # This Makefile provides convenient shortcuts for common development tasks.
 # All commands run inside Docker containers for consistency.
-# Note: All docker-compose exec commands use -T flag for non-interactive execution
-# to ensure compatibility with CI/CD, git hooks, and automated scripts.
 
-.PHONY: help up down restart logs shell
+.PHONY: help
 
 # Default target
 help: ## Show this help message
@@ -14,181 +12,10 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # =============================================================================
-# Docker Management
+# Core Development Commands
 # =============================================================================
 
-up: ## Start all services
-	docker-compose up -d
-
-down: ## Stop all services
-	docker-compose down
-
-restart: ## Restart all services
-	docker-compose restart
-
-logs: ## Show logs from all services
-	docker-compose logs -f
-
-logs-backend: ## Show logs from backend service only
-	docker-compose logs -f backend
-
-logs-frontend: ## Show logs from frontend service only
-	docker-compose logs -f frontend
-
-# =============================================================================
-# Backend Development
-# =============================================================================
-
-shell: ## Open shell in backend container
-	docker-compose exec -T backend bash
-
-artisan: ## Run artisan command (usage: make artisan cmd="migrate")
-	docker-compose exec -T backend php artisan $(cmd)
-
-# Database Commands
-migrate: ## Run database migrations
-	docker-compose exec -T backend php artisan migrate
-
-migrate-fresh: ## Drop all tables and re-run migrations
-	docker-compose exec -T backend php artisan migrate:fresh
-
-migrate-seed: ## Run migrations and seed database
-	docker-compose exec -T backend php artisan migrate:fresh --seed
-
-seed: ## Seed the database
-	docker-compose exec -T backend php artisan db:seed
-
-# =============================================================================
-# Testing & Quality Assurance
-# =============================================================================
-
-# Pre-commit hooks management
-pre-commit-install: ## Install pre-commit hooks
-	pre-commit install
-
-pre-commit-uninstall: ## Uninstall pre-commit hooks
-	pre-commit uninstall
-
-pre-commit-run: ## Run pre-commit hooks on all files
-	pre-commit run --all-files
-
-pre-commit-update: ## Update pre-commit hooks to latest versions
-	pre-commit autoupdate
-
-test: ## Run all tests (using test database)
-	docker-compose exec -T backend php artisan test --env=testing
-
-test-unit: ## Run unit tests only (using test database)
-	docker-compose exec -T backend php artisan test --testsuite=Unit --env=testing
-
-test-feature: ## Run feature tests only (using test database)
-	docker-compose exec -T backend php artisan test --testsuite=Feature --env=testing
-
-test-filter: ## Run specific test (usage: make test-filter filter="AdminTest")
-	docker-compose exec -T backend php artisan test --filter=$(filter) --env=testing
-
-test-coverage: ## Run tests with coverage report (using test database)
-	docker-compose exec -T backend php artisan test --coverage --env=testing
-
-# Pest Testing (Modern PHP Testing Framework)
-test-pest: ## Run all Pest tests natively (using test database)
-	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/"
-
-test-pest-unit: ## Run Pest unit tests only (User and Campaign models)
-	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/UserTest.php tests/Pest/CampaignTest.php"
-
-test-pest-feature: ## Run Pest feature tests only (API tests)
-	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/CampaignApiTest.php"
-
-test-pest-api: ## Run Pest API tests only
-	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/ --filter=\"api\""
-
-test-pest-filter: ## Run specific Pest test (usage: make test-pest-filter filter="UserTest")
-	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/ --filter=$(filter)"
-
-test-pest-file: ## Run specific Pest test file (usage: make test-pest-file file="UserTest.php")
-	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/$(file)"
-
-# Static Analysis
-phpstan: ## Run PHPStan static analysis
-	docker-compose exec -T backend ./vendor/bin/phpstan analyse
-
-phpstan-baseline: ## Generate PHPStan baseline
-	docker-compose exec -T backend ./vendor/bin/phpstan analyse --generate-baseline
-
-# Code Formatting
-format: ## Format code with Laravel Pint
-	docker-compose exec -T backend ./vendor/bin/pint
-
-format-check: ## Check code formatting without making changes
-	docker-compose exec -T backend ./vendor/bin/pint --test
-
-# Security
-security: ## Run security checks
-	docker-compose exec -T backend php artisan audit:security
-
-# =============================================================================
-# Cache Management
-# =============================================================================
-
-cache-clear: ## Clear all caches
-	docker-compose exec -T backend php artisan cache:clear
-
-config-clear: ## Clear configuration cache
-	docker-compose exec -T backend php artisan config:clear
-
-route-clear: ## Clear route cache
-	docker-compose exec -T backend php artisan route:clear
-
-view-clear: ## Clear view cache
-	docker-compose exec -T backend php artisan view:clear
-
-clear-all: config-clear route-clear view-clear cache-clear ## Clear all caches
-
-# =============================================================================
-# Frontend Development
-# =============================================================================
-
-frontend-shell: ## Open shell in frontend container
-	docker-compose exec -T frontend sh
-
-npm: ## Run npm command (usage: make npm cmd="install")
-	docker-compose exec -T frontend npm $(cmd)
-
-npm-install: ## Install frontend dependencies
-	docker-compose exec -T frontend npm install
-
-npm-dev: ## Run frontend in development mode
-	docker-compose exec -T frontend npm run dev
-
-npm-build: ## Build frontend for production
-	docker-compose exec -T frontend npm run build
-
-npm-test: ## Run frontend tests (run once and exit)
-	docker-compose exec -T frontend npm run test:unit -- --run
-
-npm-test-watch: ## Run frontend tests in watch mode
-	docker-compose exec -T frontend npm run test:unit
-
-npm-test-coverage: ## Run frontend tests with coverage
-	docker-compose exec -T frontend npm run test:unit -- --run --coverage
-
-npm-lint: ## Run frontend linting
-	docker-compose exec -T frontend npm run lint
-
-npm-format: ## Format frontend code
-	docker-compose exec -T frontend npm run format
-
-# =============================================================================
-# Development Workflow
-# =============================================================================
-
-install: up migrate-seed ## Full installation: start services, run migrations, seed data
-	@echo "🎉 Installation complete! Your ACME CSR Platform is ready."
-	@echo "📱 Frontend: http://localhost:3000"
-	@echo "🔧 Backend API: http://localhost:8000"
-
-launch: ## Complete initial launch: setup, install, and start development
+launch: ## Complete initial setup and launch (for new developers)
 	@echo "🚀 Launching ACME CSR Platform for the first time..."
 	@echo "📋 Prerequisites check..."
 	@command -v docker >/dev/null 2>&1 || { echo "❌ Docker is not installed. Please install Docker first."; exit 1; }
@@ -262,13 +89,6 @@ launch: ## Complete initial launch: setup, install, and start development
 	@echo "   🔧 Backend API: http://localhost:8000"
 	@echo "   📊 Database: PostgreSQL (accessible via Docker)"
 	@echo ""
-	@echo "🛠️ Useful commands:"
-	@echo "   make help          - Show all available commands"
-	@echo "   make logs          - View application logs"
-	@echo "   make test          - Run tests"
-	@echo "   make dev           - Start development mode"
-	@echo "   make down          - Stop all services"
-	@echo ""
 	@echo "🔑 Login Credentials:"
 	@echo "   - Admin: admin@acme.com / password"
 	@echo "   - Employee: john.doe@acme.com / password"
@@ -290,64 +110,142 @@ fresh: ## Fresh start: rebuild, migrate, seed
 	@make seed
 	@echo "✨ Fresh environment ready!"
 
-qa: test test-pest npm-test phpstan npm-lint ## Run all quality assurance checks
+# =============================================================================
+# Docker Management
+# =============================================================================
+
+up: ## Start all services
+	docker-compose up -d
+
+down: ## Stop all services
+	docker-compose down
+
+restart: ## Restart all services
+	docker-compose restart
+
+build: ## Build all Docker images
+	docker-compose build
+
+rebuild: ## Rebuild all Docker images from scratch
+	docker-compose build --no-cache
+
+status: ## Show status of all containers
+	docker-compose ps
+
+logs: ## Show logs from all services
+	docker-compose logs -f
+
+cleanup: ## Clean up ACME project Docker resources only
+	docker-compose down -v
+	docker image prune -f --filter "label=com.docker.compose.project=acme-corp"
+	docker container prune -f --filter "label=com.docker.compose.project=acme-corp"
+	@echo "✅ ACME project cleanup completed"
+
+reset: ## Reset everything (stop, remove, rebuild)
+	@echo "⚠️  This will stop all services, remove containers, and rebuild images."
+	@read -p "Are you sure? (y/N): " -n 1 -r; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		echo ""; \
+		echo "🔄 Resetting everything..."; \
+		docker-compose down -v --remove-orphans; \
+		docker-compose build --no-cache; \
+		echo "✅ Reset completed. Run 'make up' to start fresh."; \
+	else \
+		echo ""; \
+		echo "❌ Reset cancelled."; \
+	fi
+
+# =============================================================================
+# Backend Development
+# =============================================================================
+
+shell: ## Open shell in backend container
+	docker-compose exec -T backend bash
+
+artisan: ## Run artisan command (usage: make artisan cmd="migrate")
+	docker-compose exec -T backend php artisan $(cmd)
+
+migrate: ## Run database migrations
+	docker-compose exec -T backend php artisan migrate
+
+migrate-fresh: ## Drop all tables and re-run migrations
+	docker-compose exec -T backend php artisan migrate:fresh
+
+migrate-seed: ## Run migrations and seed database
+	docker-compose exec -T backend php artisan migrate:fresh --seed
+
+seed: ## Seed the database
+	docker-compose exec -T backend php artisan db:seed
+
+# =============================================================================
+# Testing & Quality Assurance
+# =============================================================================
+
+test: ## Run all tests (using test database)
+	docker-compose exec -T backend php artisan test --env=testing
+
+test-pest: ## Run all Pest tests (recommended)
+	docker-compose exec -T backend sh -c "APP_ENV=testing ./vendor/bin/pest tests/Pest/"
+
+test-filter: ## Run specific test (usage: make test-filter filter="AdminTest")
+	docker-compose exec -T backend php artisan test --filter=$(filter) --env=testing
+
+phpstan: ## Run PHPStan static analysis
+	docker-compose exec -T backend ./vendor/bin/phpstan analyse
+
+format: ## Format code with Laravel Pint
+	docker-compose exec -T backend ./vendor/bin/pint
+
+format-check: ## Check code formatting without making changes
+	docker-compose exec -T backend ./vendor/bin/pint --test
+
+qa: test test-pest phpstan format-check ## Run all quality assurance checks
 
 deploy-check: qa ## Check if code is ready for deployment
 	@echo "✅ All quality checks passed! Code is ready for deployment."
 
 # =============================================================================
-# Database Utilities
+# Frontend Development
 # =============================================================================
 
-db-reset: ## Reset database (fresh migration + seed)
-	@make migrate-fresh
-	@make seed
-	@echo "🗄️ Database reset complete!"
+npm: ## Run npm command (usage: make npm cmd="install")
+	docker-compose exec -T frontend npm $(cmd)
 
-db-backup: ## Create database backup
-	docker-compose exec -T postgres pg_dump -U acme_user acme_csr_platform > backup_$(shell date +%Y%m%d_%H%M%S).sql
-	@echo "💾 Database backup created!"
+npm-install: ## Install frontend dependencies
+	docker-compose exec -T frontend npm install
 
-# =============================================================================
-# Logs & Monitoring
-# =============================================================================
+npm-build: ## Build frontend for production
+	docker-compose exec -T frontend npm run build
 
-tail-backend: ## Tail backend application logs
-	docker-compose exec -T backend tail -f storage/logs/laravel.log
+npm-test: ## Run frontend tests
+	docker-compose exec -T frontend npm run test:unit -- --run
 
-tail-nginx: ## Tail nginx access logs
-	docker-compose logs -f nginx
-
-monitor: ## Show real-time service status
-	watch docker-compose ps
+npm-lint: ## Run frontend linting
+	docker-compose exec -T frontend npm run lint
 
 # =============================================================================
-# Cleanup
+# Pre-commit Hooks
 # =============================================================================
 
-clean: ## Clean up ACME project Docker resources only
-	docker-compose down -v
-	@echo "🧹 ACME project cleanup complete!"
+pre-commit-install: ## Install pre-commit hooks
+	pre-commit install
 
-clean-all: ## Clean up ACME project and remove unused Docker resources
-	docker-compose down -v
-	@echo "🗑️  Removing unused Docker images and containers..."
-	docker image prune -f --filter "label=com.docker.compose.project=acme-corp"
-	docker container prune -f --filter "label=com.docker.compose.project=acme-corp"
-	@echo "💥 ACME project cleanup complete!"
+pre-commit-run: ## Run pre-commit hooks on all files
+	pre-commit run --all-files
+
+pre-commit-update: ## Update pre-commit hooks to latest versions
+	pre-commit autoupdate
 
 # =============================================================================
-# Quick Development Tasks
+# Utility Commands
 # =============================================================================
 
-quick-test: ## Quick test run (specific to current changes)
-	@echo "🏃 Running quick tests..."
-	@make test-feature
-
-quick-check: ## Quick quality check
-	@echo "⚡ Quick quality check..."
-	@make phpstan
-	@make format-check
+cache-clear: ## Clear all Laravel caches
+	docker-compose exec -T backend php artisan cache:clear
+	docker-compose exec -T backend php artisan config:clear
+	docker-compose exec -T backend php artisan route:clear
+	docker-compose exec -T backend php artisan view:clear
+	@echo "✅ All caches cleared"
 
 fix: ## Auto-fix common issues
 	@echo "🔧 Auto-fixing code issues..."
