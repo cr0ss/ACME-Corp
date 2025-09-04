@@ -156,3 +156,54 @@ export function formatSmartCurrency(
   // For smaller amounts, use regular currency formatting
   return formatCurrency(numValue, { showCents: options?.showCents })
 }
+
+/**
+ * Format a date string for display
+ * @param dateString - The date string to format
+ * @param options - Optional formatting options
+ * @returns Formatted date string
+ */
+export function formatDate(
+  dateString: string | Date,
+  options?: {
+    format?: 'short' | 'long' | 'relative'
+    locale?: string
+  },
+): string {
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString
+
+  // Handle invalid dates
+  if (isNaN(date.getTime())) {
+    return 'Invalid Date'
+  }
+
+  const locale = options?.locale ?? 'en-US'
+
+  switch (options?.format) {
+    case 'long':
+      return date.toLocaleDateString(locale, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    case 'relative':
+      const now = new Date()
+      const diffTime = now.getTime() - date.getTime()
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+      if (diffDays === 0) return 'Today'
+      if (diffDays === 1) return 'Yesterday'
+      if (diffDays === -1) return 'Tomorrow'
+      if (diffDays > 0) return `${diffDays} days ago`
+      if (diffDays < 0) return `In ${Math.abs(diffDays)} days`
+      return formatDate(dateString, { format: 'short', locale })
+    case 'short':
+    default:
+      return date.toLocaleDateString(locale, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+  }
+}
